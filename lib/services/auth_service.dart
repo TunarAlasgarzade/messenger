@@ -50,7 +50,8 @@ class AuthService {
     await _firestore.collection("Users").doc(currentUserID).set(
       {
         "isOnline": isOnline
-      }
+      },
+      SetOptions(merge: true),
     );
   }
 }
