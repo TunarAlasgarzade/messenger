@@ -1,0 +1,54 @@
+import 'package:flutter/material.dart';
+
+class ContactTile extends StatelessWidget {
+  final String contactName;
+  final int unreadMessagesCount;
+  final void Function()? onTap;
+  final void Function()? onLongPress;
+  const ContactTile({
+    super.key,
+    required this.contactName,
+    required this.onTap,
+    required this.onLongPress,
+    required this.unreadMessagesCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.secondary,
+          borderRadius: BorderRadius.circular(12)
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface),
+            const SizedBox(width: 10),
+            Text(contactName),
+            const Spacer(),
+            if (unreadMessagesCount > 0)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(20)
+                ),
+                child: Text(
+                  unreadMessagesCount.toString(),
+                  style: TextStyle(
+                    color: Colors.white, 
+                    fontSize: 12,
+                  ),
+                ),
+              )
+          ],
+        )
+      ),
+    ); 
+  }
+}
