@@ -64,9 +64,9 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.chat, color: Colors.green, size: 70),
+              Icon(Icons.chat, color: Theme.of(context).colorScheme.primary, size: 70),
               const SizedBox(height: 25),
-              Text("Welcome back, you've been missed!", style: TextStyle(color: Colors.green)),
+              Text("Welcome back, you've been missed!", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
               const SizedBox(height: 25),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -100,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                     ), 
                     child: Text(
                       "Register now!", 
-                      style: TextStyle(color: Colors.green)
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary)
                     )
                   )
                 ],

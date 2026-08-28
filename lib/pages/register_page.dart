@@ -84,9 +84,12 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.chat, color: Colors.green, size: 70),
+              Icon(Icons.chat, color: Theme.of(context).colorScheme.primary, size: 70),
               const SizedBox(height: 25),
-              Text("Welcome, let's create an account for you!", style: TextStyle(color: Colors.green)),
+              Text(
+                "Welcome, let's create an account for you!", 
+                style: TextStyle(color: Theme.of(context).colorScheme.primary)
+              ),
               const SizedBox(height: 25),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -129,7 +132,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ), 
                     child: Text(
                       "Login now!", 
-                      style: TextStyle(color: Colors.green)
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary)
                     )
                   )
                 ],
