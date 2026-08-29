@@ -263,7 +263,7 @@ class _ChatPageState extends State<ChatPage> {
               onPressed: () async {
                 if (_messageController.text.trim().isNotEmpty) {
                   await _chatService.sendMessage(
-                    _messageController.text, widget.receiverID
+                    _messageController.text, widget.receiverID, widget.receiverName
                   );
                 }
                 _messageController.text = "";

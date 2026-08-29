@@ -24,6 +24,12 @@ A real-time messaging application built with Flutter and Firebase.
 - Block and unblock contacts
 - Blocked users management (Settings > Blocked Users)
 
+### Notifications
+
+- Push notifications via OneSignal
+- Notifications sent only when the receiver is offline
+- Cloudflare Worker used as a secure notification backend
+
 ### Customization
 
 - Dark/Light mode

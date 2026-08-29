@@ -40,6 +40,8 @@ dependencies:
   audioplayers: ^6.8.1
   provider: ^6.1.5+1
   shared_preferences: ^2.5.5
+  onesignal_flutter: ^5.6.8
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

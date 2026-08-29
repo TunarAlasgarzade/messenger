@@ -305,7 +305,7 @@ packages:
     source: hosted
     version: "2.0.2"
   http:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http
       sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
@@ -440,6 +440,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.5.0"
+  onesignal_flutter:
+    dependency: "direct main"
+    description:
+      name: onesignal_flutter
+      sha256: "712e241ee08c6ef41ea8743e4983179b28c46f5f4010c047b360b3d3aa687e8b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.6.8"
   package_config:
     dependency: transitive
     description:

@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:messenger/models/message.dart';
@@ -6,8 +9,11 @@ class ChatService {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  Future<void> sendMessage(String message, String receiverID) async {
+  Future<void> sendMessage(String message, String receiverID, String contactName) async {
     final String currentUserID = _auth.currentUser!.uid;
+    final receiverDocument = await _firestore.collection("Users").doc(receiverID).get();
+    bool isReceiverOnline = receiverDocument.data()!["isOnline"];
+    final idToken = await _auth.currentUser!.getIdToken();
 
     Message newMessage = Message(
       senderId: currentUserID, 
@@ -28,6 +34,24 @@ class ChatService {
         .add(
           newMessage.toMap()
         );
+
+    if (!isReceiverOnline) {
+      final url = Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/");
+      http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $idToken"
+        }, 
+        body: jsonEncode(
+          {
+            "recipientUid": receiverID,
+            "title": contactName,
+            "message": message
+          } 
+        )
+      );
+    }
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(String currentUserID, String receiverID) {

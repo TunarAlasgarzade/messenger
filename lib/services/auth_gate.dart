@@ -13,10 +13,13 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
   final _auth = AuthService();
+
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-    _auth.setStatus(true);
+    if (FirebaseAuth.instance.currentUser != null) {
+      _auth.setStatus(true);
+    }
     super.initState();
   }
 
@@ -28,10 +31,12 @@ class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _auth.setStatus(true);
-    } else {
-      _auth.setStatus(false);
+      if (FirebaseAuth.instance.currentUser != null) {
+        if (state == AppLifecycleState.resumed) {
+        _auth.setStatus(true);
+      } else {
+        _auth.setStatus(false);
+      }
     }
   }
 
