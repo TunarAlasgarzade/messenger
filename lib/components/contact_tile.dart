@@ -19,7 +19,7 @@ class ContactTile extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        margin: const EdgeInsets.only(top: 10, left: 12, right: 12),
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.secondary,
@@ -32,12 +32,9 @@ class ContactTile extends StatelessWidget {
             Text(contactName),
             const Spacer(),
             if (unreadMessagesCount > 0)
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(20)
-                ),
+              CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                radius: 12,
                 child: Text(
                   unreadMessagesCount.toString(),
                   style: TextStyle(
