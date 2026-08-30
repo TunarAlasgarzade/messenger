@@ -190,12 +190,14 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ] : [],
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _buildMessageList(),
-          _buildUserInput()
-        ],
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _buildMessageList(),
+            _buildUserInput()
+          ],
+        ),
       ),
     );
   }
