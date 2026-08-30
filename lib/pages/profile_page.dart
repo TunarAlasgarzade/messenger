@@ -59,10 +59,29 @@ class _ProfilePageState extends State<ProfilePage> {
                 leading: Icon(Icons.logout, color: Colors.red),
                 title: Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
                 onTap: () {
-                  _authService.logout();
-                  Navigator.pushReplacement(
-                    context, MaterialPageRoute(
-                      builder: (context) => LoginPage()
+                  showDialog(
+                    context: context, 
+                    builder: (context) => AlertDialog(
+                      title: Text("Logout?"),
+                      content: Text("Are you sure you want to logout?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context), 
+                          child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _authService.logout();
+                            Navigator.pushReplacement(
+                              context, MaterialPageRoute(
+                                builder: (context) => LoginPage()
+                              )
+                            );
+                          }, 
+                          child: Text("Logout", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+                        )
+                      ],
                     )
                   );
                 },
@@ -71,10 +90,31 @@ class _ProfilePageState extends State<ProfilePage> {
                 leading: Icon(Icons.delete_forever, color: Colors.red),
                 title: Text("Delete Account", style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
                 onTap: () {
-                  _authService.deleteAccount();
-                  Navigator.pushReplacement(
-                    context, MaterialPageRoute(
-                      builder: (context) => LoginPage()
+                  showDialog(
+                    context: context, 
+                    builder: (context) => AlertDialog(
+                      title: Text("Delete Account?"),
+                      content: Text("Are you sure? This action cannot be undone."),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context), 
+                          child: Text("Cancel", style: TextStyle(color: Colors.green))
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            await _authService.deleteAccount();
+                            if (context.mounted) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LoginPage(),
+                                ),
+                              );
+                            }
+                          }, 
+                          child: Text("Delete Account", style: TextStyle(color: Colors.red))
+                        )
+                      ],
                     )
                   );
                 }

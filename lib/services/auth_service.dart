@@ -46,8 +46,8 @@ class AuthService {
     final currentUserID = _auth.currentUser!.uid;
 
     await OneSignal.logout();
-    await _auth.currentUser!.delete();
     await _firestore.collection("Users").doc(currentUserID).delete();
+    await _auth.currentUser!.delete();
   }
 
   Future<void> setStatus(bool isOnline) async {

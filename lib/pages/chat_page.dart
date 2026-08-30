@@ -158,14 +158,33 @@ class _ChatPageState extends State<ChatPage> {
           ),
           IconButton(
             onPressed: () {
-              setState(() {
-                isLongPressed = false;
-                _chatService.deleteMessage(
-                  userID, 
-                  widget.receiverID, 
-                  selectedDocumentID
-                );
-              });
+              showDialog(
+                context: context, 
+                builder: (context) => AlertDialog(
+                  title: Text("Delete  Message?"),
+                  content: Text("Are you sure you want to delete this message?"),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context), 
+                      child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        setState(() {
+                          isLongPressed = false;
+                        });
+                        _chatService.deleteMessage(
+                          userID, 
+                          widget.receiverID, 
+                          selectedDocumentID
+                        );
+                      }, 
+                      child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+                    )
+                  ],
+                )
+              );
             }, 
             icon: Icon(Icons.delete)
           ),
