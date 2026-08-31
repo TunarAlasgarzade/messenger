@@ -53,7 +53,7 @@ class AuthService {
   Future<void> setStatus(bool isOnline) async {
     final currentUserID = _auth.currentUser!.uid;
 
-    await _firestore.collection("Users").doc(currentUserID).set(
+    await _firestore.collection("Users").doc(currentUserID).collection("status").doc("data").set(
       {
         "isOnline": isOnline
       },

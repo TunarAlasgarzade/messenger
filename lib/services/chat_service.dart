@@ -11,8 +11,8 @@ class ChatService {
 
   Future<void> sendMessage(String message, String receiverID, String contactName) async {
     final String currentUserID = _auth.currentUser!.uid;
-    final receiverDocument = await _firestore.collection("Users").doc(receiverID).get();
-    bool isReceiverOnline = receiverDocument.data()!["isOnline"];
+    final receiverDocument = await _firestore.collection("Users").doc(receiverID).collection("status").doc("data").get();
+    bool? isReceiverOnline = receiverDocument.data()?["isOnline"];
     final idToken = await _auth.currentUser!.getIdToken();
 
     Message newMessage = Message(
@@ -35,7 +35,7 @@ class ChatService {
           newMessage.toMap()
         );
 
-    if (!isReceiverOnline) {
+    if (isReceiverOnline != true) {
       final url = Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/");
       http.post(
         url,
@@ -45,6 +45,7 @@ class ChatService {
         }, 
         body: jsonEncode(
           {
+            "action": "sendNotification",
             "recipientUid": receiverID,
             "title": contactName,
             "message": message
@@ -195,17 +196,32 @@ class ChatService {
   }
   
   Future<String?> getUserUIDByEmail(String email) async {
-    final snapshot = await _firestore
-        .collection("Users")
-        .where("email", isEqualTo: email)
-        .limit(1)
-        .get();
-    
-    if (snapshot.docs.isEmpty) {
+    final user = _auth.currentUser;
+
+    if (user == null) {
       return null;
     }
 
-    return snapshot.docs.first.data()["uid"];
+    final idToken = await user.getIdToken();
+    final response = await http.post(
+      Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $idToken",
+      },
+      body: jsonEncode({
+        "action": "getUidByEmail",
+        "email": email.trim()
+      })
+    );
+    
+    if (response.statusCode != 200) {
+      return null;
+    }
+
+    final data = jsonDecode(response.body);
+
+    return data["uid"];
   }
 
   Future<void> markAsRead(String receiverID, String messageID) async {

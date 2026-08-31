@@ -91,15 +91,15 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 }
                 return StreamBuilder(
-                  stream: FirebaseFirestore.instance.collection("Users").doc(widget.receiverID).snapshots(), 
+                  stream: FirebaseFirestore.instance.collection("Users").doc(widget.receiverID).collection("status").doc("data").snapshots(), 
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       return Text(
-                        snapshot.data!.data()!["isOnline"] == true ? "Online" : "Offline",
+                        snapshot.data!.data()?["isOnline"] == true ? "Online" : "Offline",
                         style: TextStyle(fontSize: 13, color: Colors.white),
                       );
                     }
-                    return Text("");
+                    return Text("", style: TextStyle(fontSize: 13));
                   },
                 );
               }, 
