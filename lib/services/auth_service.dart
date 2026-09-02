@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:messenger/services/profile_service.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class AuthService {
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
+  final _profileService = ProfileService();
 
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     final credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
@@ -37,7 +39,7 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await setStatus(false);
+    await _profileService.setStatus(false);
     await OneSignal.logout();
     await _auth.signOut();
   }
@@ -48,16 +50,5 @@ class AuthService {
     await OneSignal.logout();
     await _firestore.collection("Users").doc(currentUserID).delete();
     await _auth.currentUser!.delete();
-  }
-
-  Future<void> setStatus(bool isOnline) async {
-    final currentUserID = _auth.currentUser!.uid;
-
-    await _firestore.collection("Users").doc(currentUserID).collection("status").doc("data").set(
-      {
-        "isOnline": isOnline
-      },
-      SetOptions(merge: true),
-    );
   }
 }

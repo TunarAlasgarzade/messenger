@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 class ContactTile extends StatelessWidget {
   final String contactName;
+  final String? profilePhoto;
   final int unreadMessagesCount;
   final void Function()? onTap;
   final void Function()? onLongPress;
   const ContactTile({
     super.key,
     required this.contactName,
+    required this.profilePhoto,
     required this.onTap,
     required this.onLongPress,
     required this.unreadMessagesCount,
@@ -20,14 +22,20 @@ class ContactTile extends StatelessWidget {
       onLongPress: onLongPress,
       child: Container(
         margin: const EdgeInsets.only(top: 10, left: 12, right: 12),
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.all(11),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.secondary,
           borderRadius: BorderRadius.circular(12)
         ),
         child: Row(
           children: [
-            Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface),
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              backgroundImage: profilePhoto != null ? NetworkImage(profilePhoto!) : null,
+              child: profilePhoto == null 
+              ? Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface) : null,
+            ),
             const SizedBox(width: 10),
             Text(contactName),
             const Spacer(),

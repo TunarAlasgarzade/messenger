@@ -23,6 +23,12 @@ A real-time messaging application built with Flutter and Firebase.
 - Add, delete, and rename contacts
 - Block and unblock contacts
 - Blocked users management (Settings > Blocked Users)
+- Contact profile photos
+
+### Profile
+
+- Upload and change profile photo
+- Profile photos displayed in contacts and chats
 
 ### Notifications
 
@@ -38,12 +44,11 @@ A real-time messaging application built with Flutter and Firebase.
 
 ## Screenshots
 
-
-| | |
-|---|---|
-| ![](screenshots/messenger-home-page-ss.png) | ![](screenshots/messenger-chat-page-ss.png) |
-| ![](screenshots/messenger-profile-page-ss.png) | ![](screenshots/messenger-settings-page-ss.png) |
-| ![](screenshots/messenger-appearance-page-ss.png) | ![](screenshots/messenger-blockedcontacts-page-ss.png) 
+|                                                   |                                                        |
+| ------------------------------------------------- | ------------------------------------------------------ |
+| ![](screenshots/messenger-home-page-ss.png)       | ![](screenshots/messenger-chat-page-ss.png)            |
+| ![](screenshots/messenger-profile-page-ss.png)    | ![](screenshots/messenger-settings-page-ss.png)        |
+| ![](screenshots/messenger-appearance-page-ss.png) | ![](screenshots/messenger-blockedcontacts-page-ss.png) |
 
 ## Tech Stack
 
@@ -51,5 +56,9 @@ A real-time messaging application built with Flutter and Firebase.
 - Dart
 - Firebase Authentication
 - Cloud Firestore
+- Cloudinary
+- HTTP
 - Provider
 - SharedPreferences
+- OneSignal
+- Cloudflare Workers

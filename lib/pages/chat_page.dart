@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:messenger/components/message_bubble.dart';
 import 'package:messenger/components/my_textfield.dart';
 import 'package:messenger/services/chat_service.dart';
+import 'package:messenger/services/profile_service.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiverName;
@@ -26,6 +27,7 @@ class _ChatPageState extends State<ChatPage> {
   final _editMessageController = TextEditingController();
   final _scrollController = ScrollController();
   final _chatService = ChatService();
+  final _profileService = ProfileService();
   final player = AudioPlayer();
   StreamSubscription? _messageSubscription;
   String selectedDocumentID = "";
@@ -77,33 +79,50 @@ class _ChatPageState extends State<ChatPage> {
         iconTheme: const IconThemeData(
           color: Colors.white
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(widget.receiverName, style: TextStyle(color: Colors.white)),
-            StreamBuilder(
-              stream: _chatService.getTypingStatus(widget.receiverID), 
-              builder: (context, typingSnapshot) {
-                if (typingSnapshot.hasData && typingSnapshot.data!.data()?["isTyping"] == true) {
-                  return Text(
-                    "${widget.receiverName} is typing",
-                    style: TextStyle(fontSize: 13, color: Colors.white),
-                  );
-                }
-                return StreamBuilder(
-                  stream: FirebaseFirestore.instance.collection("Users").doc(widget.receiverID).collection("status").doc("data").snapshots(), 
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
+            StreamBuilder<String?>(
+              stream: _profileService.getReceiverProfilePhoto(widget.receiverID),
+              builder: (context, snapshot) {
+                return CircleAvatar(
+                  radius: 14,
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  backgroundImage: snapshot.data != null ? NetworkImage(snapshot.data!) : null,
+                  child: snapshot.data == null 
+                  ? Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface) : null,
+                );
+              },
+            ),
+            SizedBox(width: 15),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.receiverName, style: TextStyle(color: Colors.white)),
+                StreamBuilder(
+                  stream: _chatService.getTypingStatus(widget.receiverID), 
+                  builder: (context, typingSnapshot) {
+                    if (typingSnapshot.hasData && typingSnapshot.data!.data()?["isTyping"] == true) {
                       return Text(
-                        snapshot.data!.data()?["isOnline"] == true ? "Online" : "Offline",
+                        "${widget.receiverName} is typing",
                         style: TextStyle(fontSize: 13, color: Colors.white),
                       );
                     }
-                    return Text("", style: TextStyle(fontSize: 13));
-                  },
-                );
-              }, 
-            )
+                    return StreamBuilder(
+                      stream: FirebaseFirestore.instance.collection("Users").doc(widget.receiverID).collection("profile").doc("data").snapshots(), 
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return Text(
+                            snapshot.data!.data()?["isOnline"] == true ? "Online" : "Offline",
+                            style: TextStyle(fontSize: 13, color: Colors.white),
+                          );
+                        }
+                        return Text("", style: TextStyle(fontSize: 13));
+                      },
+                    );
+                  }, 
+                )
+              ],
+            ),
           ],
         ),
         actions: isLongPressed == true ? [
