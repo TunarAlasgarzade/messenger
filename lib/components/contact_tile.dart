@@ -29,12 +29,24 @@ class ContactTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              backgroundImage: profilePhoto != null ? NetworkImage(profilePhoto!) : null,
-              child: profilePhoto == null 
-              ? Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface) : null,
+            GestureDetector(
+              onTap: () {
+                if (profilePhoto != null) {
+                  showDialog(
+                    context: context, 
+                    builder: (context) => Dialog(
+                      child: InteractiveViewer(child: Image.network(profilePhoto!)),
+                    )
+                  );
+                }
+              },
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                backgroundImage: profilePhoto != null ? NetworkImage(profilePhoto!) : null,
+                child: profilePhoto == null 
+                ? Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface) : null,
+              ),
             ),
             const SizedBox(width: 10),
             Text(contactName),

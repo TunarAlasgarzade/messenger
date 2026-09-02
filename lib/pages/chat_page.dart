@@ -84,12 +84,26 @@ class _ChatPageState extends State<ChatPage> {
             StreamBuilder<String?>(
               stream: _profileService.getReceiverProfilePhoto(widget.receiverID),
               builder: (context, snapshot) {
-                return CircleAvatar(
-                  radius: 18.5,
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                  backgroundImage: snapshot.data != null ? NetworkImage(snapshot.data!) : null,
-                  child: snapshot.data == null 
-                  ? Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface) : null,
+                return GestureDetector(
+                  onTap: () {
+                    if (snapshot.data != null) {
+                      showDialog(
+                        context: context, 
+                        builder: (context) => Dialog(
+                          child: InteractiveViewer(
+                            child: Image.network(snapshot.data!)
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: CircleAvatar(
+                    radius: 18.5,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    backgroundImage: snapshot.data != null ? NetworkImage(snapshot.data!) : null,
+                    child: snapshot.data == null 
+                    ? Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface) : null,
+                  ),
                 );
               },
             ),
