@@ -11,7 +11,7 @@ class ChatService {
 
   Future<void> sendMessage(String message, String receiverID, String contactName) async {
     final String currentUserID = _auth.currentUser!.uid;
-    final receiverDocument = await _firestore.collection("Users").doc(receiverID).collection("status").doc("data").get();
+    final receiverDocument = await _firestore.collection("Users").doc(receiverID).collection("profile").doc("data").get();
     bool? isReceiverOnline = receiverDocument.data()?["isOnline"];
     final idToken = await _auth.currentUser!.getIdToken();
 
