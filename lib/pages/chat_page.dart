@@ -85,7 +85,7 @@ class _ChatPageState extends State<ChatPage> {
               stream: _profileService.getReceiverProfilePhoto(widget.receiverID),
               builder: (context, snapshot) {
                 return CircleAvatar(
-                  radius: 14,
+                  radius: 18.5,
                   backgroundColor: Theme.of(context).colorScheme.secondary,
                   backgroundImage: snapshot.data != null ? NetworkImage(snapshot.data!) : null,
                   child: snapshot.data == null 
