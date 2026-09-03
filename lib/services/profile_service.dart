@@ -30,6 +30,16 @@ class ProfileService {
   }
 
   Future<void> uploadProfilePhoto(XFile image, String signature, int timestamp, String folder) async {
+    final idToken = await _auth.currentUser!.getIdToken();
+    final currentUserID = _auth.currentUser!.uid;
+    final publicId = await _firestore
+        .collection("Users")
+        .doc(currentUserID)
+        .collection("profile")
+        .doc("data")
+        .get();
+    final oldPublicId = publicId.data()?["profilePhotoPublicID"];
+
     final request = http.MultipartRequest(
       "POST", 
       Uri.parse("https://api.cloudinary.com/v1_1/txdi4bc7/image/upload"),
@@ -46,12 +56,37 @@ class ProfileService {
     if (response.statusCode == 200) {
       final data = await http.Response.fromStream(response);
       final uploadData = jsonDecode(data.body);
-      await _firestore.collection("Users").doc(_auth.currentUser!.uid).collection("profile").doc("data").set(
-        {
-        "profilePhoto": uploadData["secure_url"],
-        },
-        SetOptions(merge: true),
-      );
+      if (oldPublicId != null) {
+        final deleteRequest = await http.post(
+          Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $idToken"
+          },
+          body: jsonEncode({
+            "action": "deleteProfilePhoto",
+            "publicId": oldPublicId
+          }),
+        );
+
+        if (deleteRequest.statusCode == 200) {
+          await _firestore.collection("Users").doc(_auth.currentUser!.uid).collection("profile").doc("data").set(
+            {
+            "profilePhoto": uploadData["secure_url"],
+            "profilePhotoPublicID": uploadData["public_id"],
+            },
+            SetOptions(merge: true),
+          );
+        }
+      } else {
+        await _firestore.collection("Users").doc(_auth.currentUser!.uid).collection("profile").doc("data").set(
+          {
+          "profilePhoto": uploadData["secure_url"],
+          "profilePhotoPublicID": uploadData["public_id"],
+          },
+          SetOptions(merge: true),
+        );
+      }
     }
   }
 
@@ -67,7 +102,7 @@ class ProfileService {
         .collection("profile")
         .doc("data")
         .snapshots()
-        .map((doc) => doc.data()?["profilePhoto"] as String);
+        .map((doc) => doc.data()?["profilePhoto"] as String?);
   }
 
   Stream<String?> getReceiverProfilePhoto(String receiverID) {
@@ -77,7 +112,7 @@ class ProfileService {
         .collection("profile")
         .doc("data")
         .snapshots()
-        .map((doc) => doc.data()?["profilePhoto"] as String);
+        .map((doc) => doc.data()?["profilePhoto"] as String?);
   }
 
   Future<void> setStatus(bool isOnline) async {
