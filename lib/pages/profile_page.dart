@@ -106,6 +106,40 @@ class _ProfilePageState extends State<ProfilePage> {
                   )
                 )
               ),
+              Visibility(
+                visible: _profilePhoto != null ? true : false,
+                child: ListTile(
+                  leading: Icon(Icons.no_photography_outlined),
+                  title: Text("Delete Profile Photo"),
+                  onTap: () {
+                    showDialog(
+                      context: context, 
+                      builder: (context) => AlertDialog(
+                        title: Text("Delete Profile Photo?"),
+                        content: Text("Are you sure you want to delete profile photo?"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context), 
+                            child: Text("Cancel", style: TextStyle(color: Colors.green))
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              await _profileService.deleteProfilePhoto();
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                setState(() {
+                                  _profilePhoto = null;
+                                });
+                              }
+                            }, 
+                            child: Text("Delete", style: TextStyle(color: Colors.green))
+                          )
+                        ],
+                      )
+                    );
+                  }
+                ),
+              ),
               ListTile(
                 leading: Icon(Icons.logout, color: Colors.red),
                 title: Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),

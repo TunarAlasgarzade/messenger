@@ -115,6 +115,42 @@ class ProfileService {
         .map((doc) => doc.data()?["profilePhoto"] as String?);
   }
 
+  Future<void> deleteProfilePhoto() async {
+    final idToken = await _auth.currentUser!.getIdToken();
+    final currentUserID = _auth.currentUser!.uid;
+    final data = await _firestore
+        .collection("Users")
+        .doc(currentUserID)
+        .collection("profile")
+        .doc("data")
+        .get();
+    final publicId = data.data()?["profilePhotoPublicID"];
+
+    if (publicId != null) {
+      final deleteRequest = await http.post(
+        Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $idToken"
+        },
+        body: jsonEncode({
+          "action": "deleteProfilePhoto",
+          "publicId": publicId
+        }),
+      );
+
+      if (deleteRequest.statusCode == 200) {
+        await _firestore.collection("Users").doc(currentUserID).collection("profile").doc("data").set(
+          {
+            "profilePhoto": FieldValue.delete(),
+            "profilePhotoPublicID": FieldValue.delete(),
+          },
+          SetOptions(merge: true)
+        );
+      }
+    }
+  }
+
   Future<void> setStatus(bool isOnline) async {
     final currentUserID = _auth.currentUser!.uid;
 

@@ -28,6 +28,7 @@ A real-time messaging application built with Flutter and Firebase.
 ### Profile
 
 - Upload and change profile photo
+- Delete profile photo
 - Profile photos displayed in contacts and chats
 
 ### Notifications
