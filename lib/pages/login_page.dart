@@ -17,9 +17,13 @@ class _LoginPageState extends State<LoginPage> {
   final _authService = AuthService();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool isLoginingIn = false;
 
   Future<void> login() async {
     try {
+      setState(() {
+        isLoginingIn = true;
+      });
       await _authService.signInWithEmailAndPassword(
         _emailController.text, 
         _passwordController.text, 
@@ -31,6 +35,9 @@ class _LoginPageState extends State<LoginPage> {
         )
       );
     } on FirebaseAuthException catch (e) {
+      setState(() {
+        isLoginingIn = false;
+      });
       if (e.code == "invalid-credential") {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -86,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 15),
-              MyButton(onPressed: login, text: "Login"),
+              isLoginingIn ? CircularProgressIndicator() : MyButton(onPressed: login, text: "Login"),
               const SizedBox(height: 15),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

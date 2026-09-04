@@ -18,10 +18,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool isRegistering = false;
 
   Future<void> register() async {
     if(_passwordController.text == _confirmPasswordController.text) {
       try {
+        setState(() {
+          isRegistering = true;
+        });
         await _authService.signUpWithEmailAndPassword(
           _emailController.text, 
           _passwordController.text,
@@ -33,6 +37,9 @@ class _RegisterPageState extends State<RegisterPage> {
           )
         );
       } on FirebaseAuthException catch (e) {
+        setState(() {
+          isRegistering = false;
+        });
         if (e.code == "email-already-in-use") {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -118,7 +125,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               const SizedBox(height: 15),
-              MyButton(onPressed: register, text: "Register"),
+              isRegistering ? CircularProgressIndicator() : MyButton(onPressed: register, text: "Register"),
               const SizedBox(height: 15),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

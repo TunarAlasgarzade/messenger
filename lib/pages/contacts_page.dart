@@ -20,6 +20,7 @@ class _ContactsPageState extends State<ContactsPage> {
   String selectedContactName = "";
   String selectedContactEmail = "";
   bool isLongPressed = false;
+  bool _isAddingContact = false;
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +36,18 @@ class _ContactsPageState extends State<ContactsPage> {
         )
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context, 
-            builder: (context) => AddContactDialog(),
-          );
-        },
+        onPressed: () => _isAddingContact ? null : showDialog(
+          context: context, 
+          builder: (context) => AddContactDialog(
+            onLoadingChanged: (isLoading) {
+              setState(() {
+                _isAddingContact = isLoading;
+              });
+            },
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.primary,
-        child: Icon(Icons.add, color: Colors.white),
+        child: _isAddingContact ? CircularProgressIndicator(color: Colors.white) : Icon(Icons.add, color: Colors.white),
       ),
     );
   }

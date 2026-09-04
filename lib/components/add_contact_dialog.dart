@@ -3,7 +3,8 @@ import 'package:messenger/components/my_textfield.dart';
 import 'package:messenger/services/chat_service.dart';
 
 class AddContactDialog extends StatefulWidget {
-  const AddContactDialog({super.key});
+  final void Function(bool) onLoadingChanged;
+  const AddContactDialog({super.key, required this.onLoadingChanged});
 
   @override
   State<AddContactDialog> createState() => _AddContactDialogState();
@@ -54,14 +55,19 @@ class _AddContactDialogState extends State<AddContactDialog> {
           ),
           onPressed: () async {
             if (_nameController.text.trim().isNotEmpty && _emailController.text.trim().isNotEmpty) {
+              widget.onLoadingChanged(true);
               Navigator.pop(context);
               final uid = await _chatService.getUserUIDByEmail(_emailController.text);
-              if (uid == null) return;
-              await _chatService.addContact(
-                uid, 
-                _nameController.text, 
-                _emailController.text,
-              );
+              if (uid == null) {
+                widget.onLoadingChanged(false);
+              } else {
+                await _chatService.addContact(
+                  uid, 
+                  _nameController.text, 
+                  _emailController.text,
+                );
+                widget.onLoadingChanged(false);
+              } 
             }
           },
           child: Text("Save", style: TextStyle(color: Colors.white))
