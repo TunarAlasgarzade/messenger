@@ -20,46 +20,55 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoginingIn = false;
 
   Future<void> login() async {
-    try {
-      setState(() {
-        isLoginingIn = true;
-      });
-      await _authService.signInWithEmailAndPassword(
-        _emailController.text, 
-        _passwordController.text, 
-      );
-      if(!mounted) return;
-      Navigator.pushReplacement(
-        context, MaterialPageRoute(
-          builder: (context) => HomePage()
+    if (_emailController.text.trim().isNotEmpty && _passwordController.text.trim().isNotEmpty) {
+      try {
+        setState(() {
+          isLoginingIn = true;
+        });
+        await _authService.signInWithEmailAndPassword(
+          _emailController.text, 
+          _passwordController.text, 
+        );
+        if(!mounted) return;
+        Navigator.pushReplacement(
+          context, MaterialPageRoute(
+            builder: (context) => HomePage()
+          )
+        );
+      } on FirebaseAuthException catch (e) {
+        setState(() {
+          isLoginingIn = false;
+        });
+        if (e.code == "invalid-credential") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Wrong password or email"),
+              backgroundColor: Color(0xFFBD4444),
+            )
+          );
+        } else if (e.code == "invalid-email") {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Please enter a valid email."),
+              backgroundColor: Color(0xFFBD4444),
+            )
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Something went wrong."),
+              backgroundColor: Color(0xFFBD4444),
+            )
+          );
+        }
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Please fill in all fields."),
+          backgroundColor: Color(0xFFBD4444),
         )
       );
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        isLoginingIn = false;
-      });
-      if (e.code == "invalid-credential") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Wrong password or email"),
-            backgroundColor: Color(0xFFBD4444),
-          )
-        );
-      } else if (e.code == "invalid-email") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Please enter a valid email."),
-            backgroundColor: Color(0xFFBD4444),
-          )
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Something went wrong."),
-            backgroundColor: Color(0xFFBD4444),
-          )
-        );
-      }
     }
   }
 

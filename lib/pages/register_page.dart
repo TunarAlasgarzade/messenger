@@ -21,63 +21,72 @@ class _RegisterPageState extends State<RegisterPage> {
   bool isRegistering = false;
 
   Future<void> register() async {
-    if(_passwordController.text == _confirmPasswordController.text) {
-      try {
-        setState(() {
-          isRegistering = true;
-        });
-        await _authService.signUpWithEmailAndPassword(
-          _emailController.text, 
-          _passwordController.text,
-        );
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context, MaterialPageRoute(
-            builder: (context) => HomePage()
+    if (_emailController.text.trim().isNotEmpty && _passwordController.text.trim().isNotEmpty && _confirmPasswordController.text.trim().isNotEmpty) {
+      if (_passwordController.text == _confirmPasswordController.text) {
+        try {
+          setState(() {
+            isRegistering = true;
+          });
+          await _authService.signUpWithEmailAndPassword(
+            _emailController.text, 
+            _passwordController.text,
+          );
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context, MaterialPageRoute(
+              builder: (context) => HomePage()
+            )
+          );
+        } on FirebaseAuthException catch (e) {
+          setState(() {
+            isRegistering = false;
+          });
+          if (e.code == "email-already-in-use") {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("This email is already registered."),
+                backgroundColor: Color(0xFFBD4444),
+              )
+            );
+          } else if (e.code == "invalid-email") {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Please enter a valid email."),
+                backgroundColor: Color(0xFFBD4444),
+              )
+            );
+          } else if (e.code == "weak-password") {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Password is too weak."),
+                backgroundColor: Color(0xFFBD4444),
+              )
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Something went wrong."),
+                backgroundColor: Color(0xFFBD4444),
+              )
+            );
+          }
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Passwords don't match!", 
+              style: TextStyle(color: Colors.white)
+            ), 
+            backgroundColor: Colors.red,
           )
         );
-      } on FirebaseAuthException catch (e) {
-        setState(() {
-          isRegistering = false;
-        });
-        if (e.code == "email-already-in-use") {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("This email is already registered."),
-              backgroundColor: Color(0xFFBD4444),
-            )
-          );
-        } else if (e.code == "invalid-email") {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Please enter a valid email."),
-              backgroundColor: Color(0xFFBD4444),
-            )
-          );
-        } else if (e.code == "weak-password") {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Password is too weak."),
-              backgroundColor: Color(0xFFBD4444),
-            )
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Something went wrong."),
-              backgroundColor: Color(0xFFBD4444),
-            )
-          );
-        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            "Passwords don't match!", 
-            style: TextStyle(color: Colors.white)
-          ), 
-          backgroundColor: Colors.red,
+          content: Text("Please fill in all fields."),
+          backgroundColor: Color(0xFFBD4444),
         )
       );
     }
