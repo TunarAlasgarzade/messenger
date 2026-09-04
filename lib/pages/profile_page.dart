@@ -93,14 +93,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context), 
-                        child: Text("Cancel", style: TextStyle(color: Colors.green))
+                        child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
                       ),
                       TextButton(
                         onPressed: () {
                           Navigator.pop(context);
                           _authService.resetPassword(userEmail.toString());
                         }, 
-                        child: Text("Send", style: TextStyle(color: Colors.green))
+                        child: Text("Send", style: TextStyle(color: Theme.of(context).colorScheme.primary))
                       )
                     ],
                   )
@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context), 
-                            child: Text("Cancel", style: TextStyle(color: Colors.green))
+                            child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
                           ),
                           TextButton(
                             onPressed: () async {
@@ -132,7 +132,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 });
                               }
                             }, 
-                            child: Text("Delete", style: TextStyle(color: Colors.green))
+                            child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.primary))
                           )
                         ],
                       )
