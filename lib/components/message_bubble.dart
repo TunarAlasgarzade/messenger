@@ -52,7 +52,9 @@ class MessageBubble extends StatelessWidget {
                   Icon(
                     isRead ? Icons.done_all : Icons.done,
                     size: 14,
-                    color: isRead ? Colors.blue : Colors.white70,
+                    color: Theme.of(context).colorScheme.primary == Colors.blue 
+                    ? isRead ? Colors.white70 : Colors.grey.shade400 
+                    : isRead ? Colors.blue : Colors.white70,
                   )
                 ] : [
                   Flexible(
