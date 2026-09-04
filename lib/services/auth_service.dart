@@ -19,6 +19,7 @@ class AuthService {
         "uid": uid
       }
     );
+    await _profileService.setStatus(true);
   }
 
   Future<void> signUpWithEmailAndPassword(String email, String password) async {
@@ -32,6 +33,7 @@ class AuthService {
         "uid": uid
       }
     );
+    await _profileService.setStatus(true);
   }
 
   Future<void> resetPassword(String email) async {
