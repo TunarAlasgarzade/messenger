@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:messenger/components/message_bubble.dart';
 import 'package:messenger/components/my_textfield.dart';
 import 'package:messenger/services/chat_service.dart';
@@ -22,6 +24,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  final ImagePicker _picker = ImagePicker();
   final userID = FirebaseAuth.instance.currentUser!.uid;
   final _messageController = TextEditingController();
   final _editMessageController = TextEditingController();
@@ -30,9 +33,23 @@ class _ChatPageState extends State<ChatPage> {
   final _profileService = ProfileService();
   final player = AudioPlayer();
   StreamSubscription? _messageSubscription;
+  String selectedMessageType = "";
   String selectedDocumentID = "";
+  XFile? _selectedImage;
   bool isLongPressed = false;
   bool isFirstLoad = false;
+
+  Future<void> pickImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery
+    );
+
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -140,54 +157,57 @@ class _ChatPageState extends State<ChatPage> {
           ],
         ),
         actions: isLongPressed == true ? [
-          IconButton(
-            onPressed: () {
-              final messageID = selectedDocumentID;
-              showDialog(
-                context: context, builder: (context) => AlertDialog(
-                  title: Text("Edit Message"),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      MyTextfield(
-                        controller: _editMessageController, 
-                        obscureText: false, 
-                        hintText: "Message"
+          Visibility(
+            visible: selectedMessageType == "text",
+            child: IconButton(
+              onPressed: () {
+                final messageID = selectedDocumentID;
+                showDialog(
+                  context: context, builder: (context) => AlertDialog(
+                    title: Text("Edit Message"),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        MyTextfield(
+                          controller: _editMessageController, 
+                          obscureText: false, 
+                          hintText: "Message"
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context), 
+                        child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
                       ),
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary
+                        ),
+                        onPressed: () async {
+                          if (_editMessageController.text.trim().isNotEmpty) {
+                            Navigator.pop(context);
+                            await _chatService.updateMessage(
+                              _editMessageController.text, 
+                              widget.receiverID, 
+                              messageID
+                            );
+                            _editMessageController.clear();
+                          }
+                        },
+                        child: Text("Save", style: TextStyle(color: Colors.white))
+                      )
                     ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context), 
-                      child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                    ),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary
-                      ),
-                      onPressed: () async {
-                        if (_editMessageController.text.trim().isNotEmpty) {
-                          Navigator.pop(context);
-                          await _chatService.updateMessage(
-                            _editMessageController.text, 
-                            widget.receiverID, 
-                            messageID
-                          );
-                          _editMessageController.clear();
-                        }
-                      },
-                      child: Text("Save", style: TextStyle(color: Colors.white))
-                    )
-                  ],
-                ),
-              );
-              setState(() {
-                isLongPressed = false;
-                selectedDocumentID = "";
-              });
-            },
-            icon: Icon(Icons.edit),
+                );
+                setState(() {
+                  isLongPressed = false;
+                  selectedDocumentID = "";
+                });
+              },
+              icon: Icon(Icons.edit),
+            ),
           ),
           IconButton(
             onPressed: () {
@@ -271,16 +291,19 @@ class _ChatPageState extends State<ChatPage> {
       isRead: isRead, 
       isSelected: selectedDocumentID == doc.id, 
       message: data["message"],
+      messageType: data["messageType"],
       timestamp: timestamp,
       onTap: () => setState(() {
         isLongPressed = false;
         selectedDocumentID = "";
+        selectedMessageType = "";
       }),
       onLongPress: () {
         if (senderID == userID) {
           setState(() {
             selectedDocumentID = doc.id;
             _editMessageController.text = data["message"];
+            selectedMessageType = data["messageType"];
             isLongPressed = true;
           });
         }
@@ -291,18 +314,61 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildUserInput() {
     return Row(
       children: [
-        Expanded(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10, top: 5),
+          child: IconButton(
+            onPressed: () => pickImage(), 
+            icon: Icon(Icons.image)
+          ),
+        ),
+        _selectedImage == null ? Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(left: 10, right: 5, bottom: 10, top: 5),
+            padding: const EdgeInsets.only(right: 5, bottom: 10, top: 5),
             child: MyTextfield(
               controller: _messageController, 
               obscureText: false, 
+              maxLines: 5,
               hintText: "Type a message",
               onChanged: (value) {
                 _chatService.setTypingStatus(widget.receiverID, value.trim().isNotEmpty);
               },
             ),
           ),
+        ) : Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 5, bottom: 10, top: 5),
+            child: Stack(
+              alignment: Alignment.topRight,
+              children: [
+                GestureDetector(
+                  child: Image.file(File(_selectedImage!.path)),
+                  onTap: () => showDialog(
+                    context: context, 
+                    builder: (context) => Dialog(
+                      child: InteractiveViewer(
+                        child: Image.file(File(_selectedImage!.path))
+                      ),
+                    )
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 10, top: 10),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.red,
+                    radius: 20,
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedImage = null;
+                        });
+                      },
+                      icon: Icon(Icons.cancel, color: Colors.white)
+                    ),
+                  ),
+                ),
+              ]
+            ),
+          )
         ),
         Padding(
           padding: const EdgeInsets.only(left: 5, right: 10, bottom: 10, top: 5),
@@ -315,12 +381,19 @@ class _ChatPageState extends State<ChatPage> {
             ),
             child: IconButton(
               onPressed: () async {
-                if (_messageController.text.trim().isNotEmpty) {
-                  await _chatService.sendMessage(
+                if (_messageController.text.trim().isNotEmpty && _selectedImage == null) {
+                  await _chatService.sendTextMessage(
                     _messageController.text, widget.receiverID, widget.receiverName
+                  );
+                } else if (_selectedImage != null) {
+                  await _chatService.sendImageMessage(
+                    _selectedImage!, widget.receiverID, widget.receiverName
                   );
                 }
                 _messageController.text = "";
+                setState(() {
+                  _selectedImage = null;
+                });
                 _chatService.setTypingStatus(widget.receiverID, false);
               }, 
               icon: Icon(Icons.arrow_upward, color: Colors.white)

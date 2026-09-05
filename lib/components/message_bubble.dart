@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class MessageBubble extends StatelessWidget {
   final String message;
+  final String messageType;
   final bool isRead;
   final bool isCurrentUser;
   final bool isSelected;
@@ -15,6 +16,7 @@ class MessageBubble extends StatelessWidget {
     required this.isRead,
     required this.isSelected,
     required this.message,
+    required this.messageType,
     required this.timestamp,
     required this.onLongPress,
     required this.onTap,
@@ -31,6 +33,8 @@ class MessageBubble extends StatelessWidget {
           crossAxisAlignment: isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Container(
+              width: messageType == "image" ? 280 : null,
+              height: messageType == "image" ? 280 : null,
               margin: EdgeInsets.all(4),
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -43,10 +47,25 @@ class MessageBubble extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: isCurrentUser ? [
                   Flexible(
-                    child: Text(
+                    child: messageType == "text" ? Text(
                       message,
                       style: TextStyle(color: Colors.white),
-                    ),
+                    ) : GestureDetector(
+                      child: Image.network(
+                        message,
+                        width: 248,
+                        height: 248,
+                        fit: BoxFit.cover,
+                      ),
+                      onTap: () => showDialog(
+                        context: context, 
+                        builder: (context) => Dialog(
+                          child: InteractiveViewer(
+                            child: Image.network(message)
+                          ),
+                        ),
+                      ),
+                    )
                   ),
                   SizedBox(width: 6),
                   Icon(
@@ -58,10 +77,25 @@ class MessageBubble extends StatelessWidget {
                   )
                 ] : [
                   Flexible(
-                    child: Text(
+                    child: messageType == "text" ? Text(
                       message,
                       style: TextStyle(color: Colors.white),
-                    ),
+                    ) : GestureDetector(
+                      child: Image.network(message),
+                      onTap: () => showDialog(
+                        context: context, 
+                        builder: (context) => Dialog(
+                          child: InteractiveViewer(
+                            child: Image.network(
+                              message,
+                              width: 248,
+                              height: 248,
+                              fit: BoxFit.cover,
+                            )
+                          ),
+                        )
+                      ),
+                    )
                   ),
                 ],
               ),
