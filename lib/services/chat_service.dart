@@ -9,11 +9,32 @@ class ChatService {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  Future<void> sendTextMessage(String message, String receiverID) async {
-    final String currentUserID = _auth.currentUser!.uid;
+  Future<void> _sendNotification(String message, String receiverID) async {
     final receiverDocument = await _firestore.collection("Users").doc(receiverID).collection("profile").doc("data").get();
     bool? isReceiverOnline = receiverDocument.data()?["isOnline"];
     final idToken = await _auth.currentUser!.getIdToken();
+
+    if (isReceiverOnline != true) {
+      final url = Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/");
+      await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $idToken"
+        }, 
+        body: jsonEncode(
+          {
+            "action": "sendNotification",
+            "recipientUid": receiverID,
+            "message": message
+          } 
+        )
+      );
+    }
+  }
+
+  Future<void> sendTextMessage(String message, String receiverID) async {
+    final String currentUserID = _auth.currentUser!.uid;
 
     Message newMessage = Message(
       senderId: currentUserID, 
@@ -36,23 +57,7 @@ class ChatService {
           newMessage.toMap()
         );
 
-    if (isReceiverOnline != true) {
-      final url = Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/");
-      http.post(
-        url,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $idToken"
-        }, 
-        body: jsonEncode(
-          {
-            "action": "sendNotification",
-            "recipientUid": receiverID,
-            "message": message
-          } 
-        )
-      );
-    }
+    _sendNotification(message, receiverID);
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(String currentUserID, String receiverID) {
@@ -129,8 +134,6 @@ class ChatService {
   Future<void> sendImageMessage(XFile image, String receiverID) async {
     final String currentUserID = _auth.currentUser!.uid;
     final idToken = await _auth.currentUser!.getIdToken();
-    final receiverDocument = await _firestore.collection("Users").doc(receiverID).collection("profile").doc("data").get();
-    bool? isReceiverOnline = receiverDocument.data()?["isOnline"];
 
     final response = await http.post(
       Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
@@ -186,22 +189,7 @@ class ChatService {
         .collection("messages")
         .add(newMessage.toMap());
 
-    if (isReceiverOnline != true) {
-      http.post(
-        Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $idToken"
-        }, 
-        body: jsonEncode(
-          {
-            "action": "sendNotification",
-            "recipientUid": receiverID,
-            "message": "🖼️ New Picture"
-          }
-        )
-      );
-    }
+    _sendNotification("🖼️ New Picture", receiverID);
   }
 
   Future<void> addContact(String contactUID, String contactName, String contactEmail) async {
