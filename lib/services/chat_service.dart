@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -74,13 +73,37 @@ class ChatService {
     List<String> ids = [currentUserID, receiverID];
     ids.sort();
     String chatRoomID = ids.join('_');
-    
-    await _firestore
+
+    final message = await _firestore
         .collection("Chat_Rooms")
         .doc(chatRoomID)
         .collection("messages")
         .doc(documentID)
-        .delete();
+        .get();
+    final messageType = message.data()!["messageType"];
+    
+    if (messageType == "image") {
+      final idToken = await _auth.currentUser!.getIdToken();
+      await http.post(
+        Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $idToken"
+        },
+        body: jsonEncode({
+          "action": "deleteChatImage",
+          "receiverUid": receiverID,
+          "messageId": documentID
+        }) 
+      );
+    } else {
+      await _firestore
+          .collection("Chat_Rooms")
+          .doc(chatRoomID)
+          .collection("messages")
+          .doc(documentID)
+          .delete();
+    }
   }
 
   Future<void> updateMessage(String message, String receiverID, String messageID) async {
