@@ -37,6 +37,7 @@ class _ChatPageState extends State<ChatPage> {
   String selectedDocumentID = "";
   XFile? _selectedImage;
   bool isLongPressed = false;
+  bool isSendingImage = false;
   bool isFirstLoad = false;
 
   Future<void> pickImage() async {
@@ -380,15 +381,21 @@ class _ChatPageState extends State<ChatPage> {
               borderRadius: BorderRadius.circular(30)
             ),
             child: IconButton(
-              onPressed: () async {
+              onPressed: isSendingImage ? null : () async {
                 if (_messageController.text.trim().isNotEmpty && _selectedImage == null) {
                   await _chatService.sendTextMessage(
                     _messageController.text, widget.receiverID
                   );
                 } else if (_selectedImage != null) {
+                  setState(() {
+                    isSendingImage = true;
+                  });
                   await _chatService.sendImageMessage(
                     _selectedImage!, widget.receiverID
                   );
+                  setState(() {
+                    isSendingImage = false;
+                  });
                 }
                 _messageController.text = "";
                 setState(() {
@@ -396,7 +403,9 @@ class _ChatPageState extends State<ChatPage> {
                 });
                 _chatService.setTypingStatus(widget.receiverID, false);
               }, 
-              icon: Icon(Icons.arrow_upward, color: Colors.white)
+              icon: isSendingImage 
+              ? CircularProgressIndicator(color: Colors.white) 
+              : Icon(Icons.arrow_upward, color: Colors.white)
             ),
           ),
         ),
