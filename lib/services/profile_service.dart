@@ -17,7 +17,7 @@ class ProfileService {
         "Authorization": "Bearer $idToken"
       },
       body: jsonEncode({
-        "action": "getUploadSignature"
+        "action": "getProfilePhotoUploadSignature"
       }),
     );
 
@@ -57,36 +57,28 @@ class ProfileService {
       final data = await http.Response.fromStream(response);
       final uploadData = jsonDecode(data.body);
       if (oldPublicId != null) {
-        final deleteRequest = await http.post(
-          Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer $idToken"
-          },
-          body: jsonEncode({
-            "action": "deleteProfilePhoto",
-            "publicId": oldPublicId
-          }),
-        );
-
-        if (deleteRequest.statusCode == 200) {
-          await _firestore.collection("Users").doc(_auth.currentUser!.uid).collection("profile").doc("data").set(
-            {
-            "profilePhoto": uploadData["secure_url"],
-            "profilePhotoPublicID": uploadData["public_id"],
+        if (oldPublicId is String && oldPublicId.startsWith("profiles/$currentUserID/")) {
+          await http.post(
+            Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $idToken"
             },
-            SetOptions(merge: true),
+            body: jsonEncode({
+              "action": "deleteProfilePhoto",
+              "publicId": oldPublicId
+            }),
           );
         }
-      } else {
-        await _firestore.collection("Users").doc(_auth.currentUser!.uid).collection("profile").doc("data").set(
-          {
-          "profilePhoto": uploadData["secure_url"],
-          "profilePhotoPublicID": uploadData["public_id"],
-          },
-          SetOptions(merge: true),
-        );
-      }
+      } 
+
+      await _firestore.collection("Users").doc(_auth.currentUser!.uid).collection("profile").doc("data").set(
+        {
+        "profilePhoto": uploadData["secure_url"],
+        "profilePhotoPublicID": uploadData["public_id"],
+        },
+        SetOptions(merge: true),
+      );
     }
   }
 

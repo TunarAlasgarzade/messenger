@@ -142,7 +142,7 @@ class ChatService {
         "Authorization": "Bearer $idToken"
       },
       body: jsonEncode({
-        "action": "getUploadSignature"
+        "action": "getChatImageUploadSignature"
       }),
     );
 
