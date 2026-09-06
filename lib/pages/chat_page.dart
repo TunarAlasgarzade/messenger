@@ -383,11 +383,11 @@ class _ChatPageState extends State<ChatPage> {
               onPressed: () async {
                 if (_messageController.text.trim().isNotEmpty && _selectedImage == null) {
                   await _chatService.sendTextMessage(
-                    _messageController.text, widget.receiverID, widget.receiverName
+                    _messageController.text, widget.receiverID
                   );
                 } else if (_selectedImage != null) {
                   await _chatService.sendImageMessage(
-                    _selectedImage!, widget.receiverID, widget.receiverName
+                    _selectedImage!, widget.receiverID
                   );
                 }
                 _messageController.text = "";

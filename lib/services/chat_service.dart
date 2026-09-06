@@ -9,7 +9,7 @@ class ChatService {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  Future<void> sendTextMessage(String message, String receiverID, String contactName) async {
+  Future<void> sendTextMessage(String message, String receiverID) async {
     final String currentUserID = _auth.currentUser!.uid;
     final receiverDocument = await _firestore.collection("Users").doc(receiverID).collection("profile").doc("data").get();
     bool? isReceiverOnline = receiverDocument.data()?["isOnline"];
@@ -48,7 +48,6 @@ class ChatService {
           {
             "action": "sendNotification",
             "recipientUid": receiverID,
-            "title": contactName,
             "message": message
           } 
         )
@@ -127,7 +126,7 @@ class ChatService {
         );
   }
 
-  Future<void> sendImageMessage(XFile image, String receiverID, String contactName) async {
+  Future<void> sendImageMessage(XFile image, String receiverID) async {
     final String currentUserID = _auth.currentUser!.uid;
     final idToken = await _auth.currentUser!.getIdToken();
     final receiverDocument = await _firestore.collection("Users").doc(receiverID).collection("profile").doc("data").get();
@@ -198,7 +197,6 @@ class ChatService {
           {
             "action": "sendNotification",
             "recipientUid": receiverID,
-            "title": contactName,
             "message": "🖼️ New Picture"
           }
         )
