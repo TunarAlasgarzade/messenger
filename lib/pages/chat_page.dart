@@ -262,16 +262,10 @@ class _ChatPageState extends State<ChatPage> {
         userID, widget.receiverID
       ), 
       builder: (context, snapshot) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent, 
-            duration: Duration(milliseconds: 300), 
-            curve: Curves.easeOut
-          );
-        });
         return Expanded(
           child: ListView.builder(
             controller: _scrollController,
+            reverse: true,
             itemCount: snapshot.hasData ? snapshot.data?.docs.length : 0,
             itemBuilder: (context, index) {
               return _buildMessageItem(snapshot.data!.docs[index]);

@@ -81,17 +81,17 @@ class MessageBubble extends StatelessWidget {
                       message,
                       style: TextStyle(color: Colors.white),
                     ) : GestureDetector(
-                      child: Image.network(message),
+                      child: Image.network(
+                        message,
+                        width: 248,
+                        height: 248,
+                        fit: BoxFit.cover,
+                      ),
                       onTap: () => showDialog(
                         context: context, 
                         builder: (context) => Dialog(
                           child: InteractiveViewer(
-                            child: Image.network(
-                              message,
-                              width: 248,
-                              height: 248,
-                              fit: BoxFit.cover,
-                            )
+                            child: Image.network(message)
                           ),
                         )
                       ),
