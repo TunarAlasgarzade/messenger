@@ -9,6 +9,8 @@ import 'package:messenger/components/message_bubble.dart';
 import 'package:messenger/components/my_textfield.dart';
 import 'package:messenger/services/chat_service.dart';
 import 'package:messenger/services/profile_service.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiverName;
@@ -25,6 +27,7 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   final ImagePicker _picker = ImagePicker();
+  final AudioRecorder _recorder = AudioRecorder();
   final userID = FirebaseAuth.instance.currentUser!.uid;
   final _messageController = TextEditingController();
   final _editMessageController = TextEditingController();
@@ -36,9 +39,12 @@ class _ChatPageState extends State<ChatPage> {
   String selectedMessageType = "";
   String selectedDocumentID = "";
   XFile? _selectedImage;
+  Timer? timer;
   bool isLongPressed = false;
   bool isSendingImage = false;
   bool isFirstLoad = false;
+  bool isRecording = false;
+  int seconds = 0;
 
   Future<void> pickImage() async {
     final XFile? image = await _picker.pickImage(
@@ -50,6 +56,60 @@ class _ChatPageState extends State<ChatPage> {
         _selectedImage = image;
       });
     }
+  }
+
+  Future<void> recordAudio() async {
+    final hasPermission = await _recorder.hasPermission(request: true);
+
+    if (hasPermission) {
+      final directory = await getApplicationDocumentsDirectory();
+      final path = "${directory.path}/audioMessage_${DateTime.now()}.opus";
+      final config = RecordConfig(
+        encoder: AudioEncoder.opus,
+        sampleRate: 44100,
+        numChannels: 1,
+      );
+      await _recorder.start(config, path: path);
+      setState(() {
+        isRecording = true;
+      });
+      timer = Timer.periodic(
+        const Duration(seconds: 1), 
+        (timer) {
+          setState(() {
+            seconds++;
+          });
+        }
+      );
+    } else {
+      await _recorder.hasPermission(request: true);
+    }
+  }
+
+  Future<String?> stopRecording() async {
+    final path = await _recorder.stop();
+    setState(() {
+      isRecording = false;
+    });
+    timer!.cancel();
+    seconds = 0;
+    return path;
+  }
+
+  Future<void> cancelRecording() async {
+    await _recorder.cancel();
+    setState(() {
+      isRecording = false;
+    });
+    timer!.cancel();
+    seconds = 0;
+  }
+
+  String formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+
+    return "$minutes:${remainingSeconds.toString().padLeft(2, "0")}";
   }
 
   @override
@@ -312,11 +372,17 @@ class _ChatPageState extends State<ChatPage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 10, top: 5),
           child: IconButton(
-            onPressed: () => pickImage(), 
-            icon: Icon(Icons.image)
+            onPressed: () {
+              if (!isRecording) {
+                pickImage();
+              } else {
+                cancelRecording();
+              }
+            }, 
+            icon: Icon(!isRecording ? Icons.image : Icons.delete)
           ),
         ),
-        _selectedImage == null ? Expanded(
+        !isRecording && _selectedImage == null ? Expanded(
           child: Padding(
             padding: const EdgeInsets.only(right: 5, bottom: 10, top: 5),
             child: MyTextfield(
@@ -325,11 +391,12 @@ class _ChatPageState extends State<ChatPage> {
               maxLines: 5,
               hintText: "Type a message",
               onChanged: (value) {
+                setState(() {});
                 _chatService.setTypingStatus(widget.receiverID, value.trim().isNotEmpty);
               },
             ),
           ),
-        ) : Expanded(
+        ) : !isRecording && _selectedImage != null ? Expanded(
           child: Padding(
             padding: const EdgeInsets.only(right: 5, bottom: 10, top: 5),
             child: Stack(
@@ -364,6 +431,11 @@ class _ChatPageState extends State<ChatPage> {
               ]
             ),
           )
+        ) : Expanded(
+          child: Container(
+            alignment: Alignment.centerLeft,
+            child: Text("Recording..    ${formatDuration(seconds)}")
+          ),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 5, right: 10, bottom: 10, top: 5),
@@ -390,6 +462,9 @@ class _ChatPageState extends State<ChatPage> {
                   setState(() {
                     isSendingImage = false;
                   });
+                } else if (isRecording == true) {
+                  final path = await stopRecording();
+                  _chatService.sendVoiceMessage(path.toString(), widget.receiverID);
                 }
                 _messageController.text = "";
                 setState(() {
@@ -397,9 +472,13 @@ class _ChatPageState extends State<ChatPage> {
                 });
                 _chatService.setTypingStatus(widget.receiverID, false);
               }, 
+              onLongPress: () => recordAudio(),
               icon: isSendingImage 
               ? CircularProgressIndicator(color: Colors.white) 
-              : Icon(Icons.arrow_upward, color: Colors.white)
+              : Icon(
+                isRecording || _messageController.text.trim().isNotEmpty ? Icons.arrow_upward : Icons.mic, 
+                color: Colors.white
+              )
             ),
           ),
         ),

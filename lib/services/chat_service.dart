@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,6 +34,49 @@ class ChatService {
     }
   }
 
+  Future<Map<String, dynamic>> _uploadFile(String filePath, String action, String resourceType) async {
+    final idToken = await _auth.currentUser!.getIdToken();
+
+    final response = await http.post(
+      Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $idToken"
+      },
+      body: jsonEncode({
+        "action": action
+      }),
+    );
+    
+    final data = jsonDecode(response.body);
+
+    final signature = data["signature"];
+    final timestamp = data["timestamp"];
+    final folder = data["folder"];
+
+    final request = http.MultipartRequest(
+      "POST",
+      Uri.parse("https://api.cloudinary.com/v1_1/txdi4bc7/$resourceType/upload")
+    );
+    request.fields["api_key"] = "882198962458982";
+    request.fields["timestamp"] = timestamp.toString();
+    request.fields["signature"] = signature;
+    request.fields["folder"] = folder;
+    request.files.add(
+      await http.MultipartFile.fromPath("file", filePath)
+    );
+    final uploadResponse = await request.send();
+    final responseData = await http.Response.fromStream(uploadResponse);
+    final uploadData = jsonDecode(responseData.body);
+    final secureUrl = uploadData["secure_url"];
+    final publicID = uploadData["public_id"];
+
+    return {
+      "secureUrl": secureUrl,
+      "publicID": publicID
+    };
+  }
+
   Future<void> sendTextMessage(String message, String receiverID) async {
     final String currentUserID = _auth.currentUser!.uid;
 
@@ -58,6 +102,64 @@ class ChatService {
         );
 
     _sendNotification(message, receiverID);
+  }
+
+  Future<void> sendVoiceMessage(String audioPath, String receiverID) async {
+    final currentUserID = _auth.currentUser!.uid;
+    
+    final uploadData = await _uploadFile(audioPath, "getAudioUploadSignature", "video");
+
+    Message newMessage = Message(
+      senderId: currentUserID, 
+      receiverId: receiverID, 
+      message: uploadData["secureUrl"], 
+      messageType: "audio",
+      publicID: uploadData["publicID"], 
+      isRead: false, 
+      timestamp: Timestamp.now()
+    );
+
+    List<String> ids = [currentUserID, receiverID];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+
+    await _firestore
+        .collection("Chat_Rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .add(newMessage.toMap());
+
+    File(audioPath).delete();
+
+    _sendNotification("🎤️ New Voice Message", receiverID);
+  }
+
+  Future<void> sendImageMessage(XFile image, String receiverID) async {
+    final String currentUserID = _auth.currentUser!.uid;
+    
+    final uploadData = await _uploadFile(image.path, "getChatImageUploadSignature", "image");
+
+    Message newMessage = Message(
+      senderId: currentUserID, 
+      receiverId: receiverID, 
+      message: uploadData["secureUrl"],
+      messageType: "image", 
+      publicID: uploadData["publicID"],
+      isRead: false, 
+      timestamp: Timestamp.now()
+    );
+
+    List<String> ids = [currentUserID, receiverID];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+
+    await _firestore
+        .collection("Chat_Rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .add(newMessage.toMap());
+
+    _sendNotification("🖼️ New Picture", receiverID);
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(String currentUserID, String receiverID) {
@@ -100,6 +202,20 @@ class ChatService {
           "messageId": documentID
         }) 
       );
+    } else if (messageType == "audio") {
+      final idToken = await _auth.currentUser!.getIdToken();
+      await http.post(
+        Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $idToken"
+        },
+        body: jsonEncode({
+          "action": "deleteChatAudio",
+          "receiverUid": receiverID,
+          "messageId": documentID
+        }) 
+      );
     } else {
       await _firestore
           .collection("Chat_Rooms")
@@ -129,67 +245,6 @@ class ChatService {
             "message": message
           }
         );
-  }
-
-  Future<void> sendImageMessage(XFile image, String receiverID) async {
-    final String currentUserID = _auth.currentUser!.uid;
-    final idToken = await _auth.currentUser!.getIdToken();
-
-    final response = await http.post(
-      Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $idToken"
-      },
-      body: jsonEncode({
-        "action": "getChatImageUploadSignature"
-      }),
-    );
-
-    final data = jsonDecode(response.body);
-
-    final signature = data["signature"];
-    final timestamp = data["timestamp"];
-    final folder = data["folder"];
-
-    final request = http.MultipartRequest(
-      "POST", 
-      Uri.parse("https://api.cloudinary.com/v1_1/txdi4bc7/image/upload")
-    );
-    request.fields["api_key"] = "882198962458982";
-    request.fields["timestamp"] = timestamp.toString();
-    request.fields["signature"] = signature;
-    request.fields["folder"] = folder;
-    request.files.add(
-      await http.MultipartFile.fromPath("file", image.path)
-    );
-    final uploadResponse = await request.send();
-    final responseData = await http.Response.fromStream(uploadResponse);
-    final uploadData = jsonDecode(responseData.body);
-    final secureUrl = uploadData["secure_url"];
-    final publicID = uploadData["public_id"];
-
-    Message newMessage = Message(
-      senderId: currentUserID, 
-      receiverId: receiverID, 
-      message: secureUrl,
-      messageType: "image", 
-      publicID: publicID,
-      isRead: false, 
-      timestamp: Timestamp.now()
-    );
-
-    List<String> ids = [currentUserID, receiverID];
-    ids.sort();
-    String chatRoomID = ids.join('_');
-
-    await _firestore
-        .collection("Chat_Rooms")
-        .doc(chatRoomID)
-        .collection("messages")
-        .add(newMessage.toMap());
-
-    _sendNotification("🖼️ New Picture", receiverID);
   }
 
   Future<void> addContact(String contactUID, String contactName, String contactEmail) async {

@@ -6,17 +6,34 @@ A real-time messaging application built with Flutter and Firebase.
 
 ### Authentication
 
-- User authentication (login, register, password reset)
+- User registration and login
+- Password reset
 - Account deletion
 
 ### Messaging
 
 - Real-time messaging with Firebase Firestore
-- Message deletion
-- Message editing
+- Edit and delete messages
 - Read/unread message indicators
-- Unread message count badge
+- Unread message count
 - Real-time typing indicator
+
+### Image Messaging
+
+- Send images in chat
+- Images stored in Cloudinary
+- Image message data stored in Firestore
+- Delete image messages
+
+### Voice Messaging
+
+- Record and send voice messages
+- Recording duration displayed while recording
+- Voice message duration displayed below each message
+- Playback progress showing listened duration
+- Delete voice messages
+- Voice files stored in Cloudinary
+- Voice message data stored in Firestore
 
 ### Contacts
 
@@ -39,7 +56,7 @@ A real-time messaging application built with Flutter and Firebase.
 
 ### Customization
 
-- Dark/Light mode
+- Dark and light mode
 - Accent color selection
 - Appearance settings
 
@@ -58,8 +75,10 @@ A real-time messaging application built with Flutter and Firebase.
 - Firebase Authentication
 - Cloud Firestore
 - Cloudinary
-- HTTP
+- Cloudflare Workers
+- OneSignal
 - Provider
 - SharedPreferences
-- OneSignal
-- Cloudflare Workers
+- HTTP
+- Record
+- AudioPlayers

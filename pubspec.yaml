@@ -43,6 +43,8 @@ dependencies:
   onesignal_flutter: ^5.6.8
   http: ^1.6.0
   image_picker: ^1.2.3
+  record: ^7.1.1
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:
