@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:messenger/components/message_bubble.dart';
+import 'package:messenger/components/message_options.dart';
 import 'package:messenger/components/my_textfield.dart';
 import 'package:messenger/services/chat_service.dart';
 import 'package:messenger/services/profile_service.dart';
@@ -223,82 +224,44 @@ class _ChatPageState extends State<ChatPage> {
             child: IconButton(
               onPressed: () {
                 final messageID = selectedDocumentID;
-                showDialog(
-                  context: context, builder: (context) => AlertDialog(
-                    title: Text("Edit Message"),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        MyTextfield(
-                          controller: _editMessageController, 
-                          obscureText: false, 
-                          hintText: "Message"
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context), 
-                        child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                      ),
-                      FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary
-                        ),
-                        onPressed: () async {
-                          if (_editMessageController.text.trim().isNotEmpty) {
-                            Navigator.pop(context);
-                            await _chatService.updateMessage(
-                              _editMessageController.text, 
-                              widget.receiverID, 
-                              messageID
-                            );
-                            _editMessageController.clear();
-                          }
-                        },
-                        child: Text("Save", style: TextStyle(color: Colors.white))
-                      )
-                    ],
-                  ),
-                );
-                setState(() {
-                  isLongPressed = false;
-                  selectedDocumentID = "";
-                });
+                MessageOptions(
+                  () {}, 
+                  () async {
+                    setState(() {
+                      isLongPressed = false;
+                      selectedDocumentID = "";
+                    });
+                    if (_editMessageController.text.trim().isNotEmpty) {
+                      await _chatService.updateMessage(
+                        _editMessageController.text, 
+                        widget.receiverID, 
+                        messageID
+                      );
+                      _editMessageController.clear();
+                    }
+                  }, 
+                  _editMessageController
+                ).showEditMessageDialog(context);
               },
               icon: Icon(Icons.edit),
             ),
           ),
           IconButton(
-            onPressed: () {
-              showDialog(
-                context: context, 
-                builder: (context) => AlertDialog(
-                  title: Text("Delete  Message?"),
-                  content: Text("Are you sure you want to delete this message?"),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context), 
-                      child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        setState(() {
-                          isLongPressed = false;
-                        });
-                        _chatService.deleteMessage(
-                          userID, 
-                          widget.receiverID, 
-                          selectedDocumentID
-                        );
-                      }, 
-                      child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                    )
-                  ],
-                )
-              );
+            onPressed: () async {
+              await MessageOptions(
+                () {
+                  setState(() {
+                    isLongPressed = false;
+                  });
+                  _chatService.deleteMessage(
+                    userID, 
+                    widget.receiverID, 
+                    selectedDocumentID
+                  );
+                }, 
+                () {}, 
+                _editMessageController
+              ).showDeleteMessageDialog(context);
             }, 
             icon: Icon(Icons.delete)
           ),
