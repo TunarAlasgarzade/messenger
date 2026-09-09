@@ -65,22 +65,24 @@ class _MessageBubbleState extends State<MessageBubble> {
   @override
   void initState() {
     super.initState();
-    _player.onPlayerStateChanged.listen((state) {
+    if (widget.messageType == "audio") {
+      _player.onPlayerStateChanged.listen((state) {
       setState(() {
-        isPlaying = (state == PlayerState.playing);
+          isPlaying = (state == PlayerState.playing);
+        });
       });
-    });
-    _player.onDurationChanged.listen((newDuration) {
-      setState(() {
-        duration = newDuration;
+      _player.onDurationChanged.listen((newDuration) {
+        setState(() {
+          duration = newDuration;
+        });
       });
-    });
-    _player.onPositionChanged.listen((newPosition) {
-      setState(() {
-        position = newPosition;
+      _player.onPositionChanged.listen((newPosition) {
+        setState(() {
+          position = newPosition;
+        });
       });
-    });
-    loadAudio();
+      loadAudio();
+    }
   }
 
   @override
