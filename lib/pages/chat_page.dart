@@ -460,7 +460,7 @@ class _ChatPageState extends State<ChatPage> {
               icon: isSendingImage 
               ? CircularProgressIndicator(color: Colors.white) 
               : Icon(
-                isRecording || _messageController.text.trim().isNotEmpty ? Icons.arrow_upward : Icons.mic, 
+                isRecording || _selectedImage != null || _messageController.text.trim().isNotEmpty ? Icons.arrow_upward : Icons.mic, 
                 color: Colors.white
               )
             ),
