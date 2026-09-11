@@ -107,9 +107,13 @@ class _MessageBubbleState extends State<MessageBubble> {
               margin: EdgeInsets.all(4),
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: widget.isCurrentUser ? widget.isSelected
+                color: widget.isCurrentUser 
+                  ? widget.isSelected
                   ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6) 
-                  : Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.tertiary,
+                  : Theme.of(context).colorScheme.primary 
+                  : widget.isSelected 
+                  ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.6) 
+                  : Theme.of(context).colorScheme.tertiary,
                 borderRadius: BorderRadius.circular(12)
               ),
               child: Row(

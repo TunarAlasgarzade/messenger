@@ -39,6 +39,8 @@ class _ChatPageState extends State<ChatPage> {
   StreamSubscription? _messageSubscription;
   String selectedMessageType = "";
   String selectedDocumentID = "";
+  String selectedImageUrl = "";
+  String selectedSenderID = "";
   XFile? _selectedImage;
   Timer? timer;
   bool isLongPressed = false;
@@ -220,7 +222,19 @@ class _ChatPageState extends State<ChatPage> {
         ),
         actions: isLongPressed == true ? [
           Visibility(
-            visible: selectedMessageType == "text",
+            visible: selectedMessageType == "image",
+            child: IconButton(
+              onPressed: () {
+                setState(() {
+                  isLongPressed = false;
+                });
+                _chatService.saveImage(selectedImageUrl);
+              }, 
+              icon: Icon(Icons.download)
+            )
+          ),
+          Visibility(
+            visible: selectedSenderID == userID ? selectedMessageType == "text" : false,
             child: IconButton(
               onPressed: () {
                 final messageID = selectedDocumentID;
@@ -246,24 +260,27 @@ class _ChatPageState extends State<ChatPage> {
               icon: Icon(Icons.edit),
             ),
           ),
-          IconButton(
-            onPressed: () async {
-              await MessageOptions(
-                () {
-                  setState(() {
-                    isLongPressed = false;
-                  });
-                  _chatService.deleteMessage(
-                    userID, 
-                    widget.receiverID, 
-                    selectedDocumentID
-                  );
-                }, 
-                () {}, 
-                _editMessageController
-              ).showDeleteMessageDialog(context);
-            }, 
-            icon: Icon(Icons.delete)
+          Visibility(
+            visible: selectedSenderID == userID,
+            child: IconButton(
+              onPressed: () async {
+                await MessageOptions(
+                  () {
+                    setState(() {
+                      isLongPressed = false;
+                    });
+                    _chatService.deleteMessage(
+                      userID, 
+                      widget.receiverID, 
+                      selectedDocumentID
+                    );
+                  }, 
+                  () {}, 
+                  _editMessageController
+                ).showDeleteMessageDialog(context);
+              }, 
+              icon: Icon(Icons.delete)
+            ),
           ),
         ] : [],
       ),
@@ -315,13 +332,17 @@ class _ChatPageState extends State<ChatPage> {
         isLongPressed = false;
         selectedDocumentID = "";
         selectedMessageType = "";
+        selectedSenderID = "";
+        selectedImageUrl = "";
       }),
       onLongPress: () {
-        if (senderID == userID) {
+        if (senderID == userID || data["messageType"] == "image") {
           setState(() {
             selectedDocumentID = doc.id;
             _editMessageController.text = data["message"];
             selectedMessageType = data["messageType"];
+            selectedImageUrl = data["message"];
+            selectedSenderID = senderID;
             isLongPressed = true;
           });
         }

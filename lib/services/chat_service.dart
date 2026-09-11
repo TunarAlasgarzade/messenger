@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:gal/gal.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:messenger/models/message.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ChatService {
   final _firestore = FirebaseFirestore.instance;
@@ -455,5 +457,23 @@ class ChatService {
         .where("isRead", isEqualTo: false)
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
+  }
+
+  Future<void> saveImage(String imageUrl) async {
+    final response = await http.get(Uri.parse(imageUrl));
+    if (response.statusCode == 200) {
+      final imageBytes = response.bodyBytes;
+      final directory = await getApplicationCacheDirectory();
+      final imagePath = "${directory.path}/image_${DateTime.now()}.png";
+      await File(imagePath).writeAsBytes(imageBytes);
+      final permission = await Gal.requestAccess();
+      if (permission == true) {
+        await Gal.putImage(imagePath, album: "Messenger Images");
+      } else {
+        print("permission denied");
+      }
+    } else {
+      print("STATUS CODE: ${response.statusCode}");
+    }
   }
 }
