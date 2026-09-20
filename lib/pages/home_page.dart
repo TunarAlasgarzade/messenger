@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:messenger/components/my_bottomnav.dart';
 import 'package:messenger/pages/contacts_page.dart';
+import 'package:messenger/pages/groups_page.dart';
 import 'package:messenger/pages/profile_page.dart';
 import 'package:messenger/pages/settings_page.dart';
 
@@ -16,6 +17,7 @@ class _HomePageState extends State<HomePage> {
   String selectedContactEmail = "";
   bool isLongPressed = false;
   int _selectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,6 +33,8 @@ class _HomePageState extends State<HomePage> {
       body: _selectedIndex == 0 
         ? ContactsPage() 
         : _selectedIndex == 1 
+        ? GroupsPage() 
+        : _selectedIndex == 2 
         ? ProfilePage() 
         : SettingsPage(),
     );

@@ -47,7 +47,7 @@ class _ContactsPageState extends State<ContactsPage> {
           ),
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,
-        child: _isAddingContact ? CircularProgressIndicator(color: Colors.white) : Icon(Icons.add, color: Colors.white),
+        child: _isAddingContact ? CircularProgressIndicator(color: Colors.white) : Icon(Icons.person_add_alt_1, color: Colors.white),
       ),
     );
   }

@@ -18,6 +18,25 @@ A real-time messaging application built with Flutter and Firebase.
 - Unread message count
 - Real-time typing indicator
 
+### Group Messaging
+
+- Create group chats
+- Add contacts to groups
+- Real-time group messaging
+- Group member management
+- Admin and member roles
+- Promote members to admin
+- Remove admin privileges
+- Remove members from groups
+- Leave groups
+- Automatic admin reassignment when the only admin leaves
+- Rename groups
+- Permission setting for allowing members to edit group information
+- Group member list
+- Group member names and email display
+- Edit and delete your own group messages
+- Group messages stored in Firebase Firestore
+
 ### Image Messaging
 
 - Send images in chat
@@ -64,9 +83,10 @@ A real-time messaging application built with Flutter and Firebase.
 
 |                                                   |                                                        |
 | ------------------------------------------------- | ------------------------------------------------------ |
-| ![](screenshots/messenger-home-page-ss.png)       | ![](screenshots/messenger-chat-page-ss.png)            |
-| ![](screenshots/messenger-profile-page-ss.png)    | ![](screenshots/messenger-settings-page-ss.png)        |
-| ![](screenshots/messenger-appearance-page-ss.png) | ![](screenshots/messenger-blockedcontacts-page-ss.png) |
+| ![](screenshots/messenger-home-page-ss.png)      | ![](screenshots/messenger-chat-page-ss.png)           |
+| ![](screenshots/messenger-groups-page-ss.png)    | ![](screenshots/messenger-group-chat-page-ss.png)     |
+| ![](screenshots/messenger-profile-page-ss.png)   | ![](screenshots/messenger-settings-page-ss.png)       |
+| ![](screenshots/messenger-appearance-page-ss.png)| ![](screenshots/messenger-blockedcontacts-page-ss.png)|
 
 ## Tech Stack
 

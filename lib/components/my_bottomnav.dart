@@ -22,6 +22,10 @@ class MyBottomNav extends StatelessWidget {
           label: "Chats"
         ),
         NavigationDestination(
+          icon: Icon(Icons.group, color: Theme.of(context).colorScheme.onSurface), 
+          label: "Groups"
+        ),
+        NavigationDestination(
           icon: Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface), 
           label: "Profile"
         ),
