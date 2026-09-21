@@ -86,44 +86,63 @@ class _ContactsPageState extends State<ContactsPage> {
                       return StreamBuilder<int>(
                         stream: _chatService.getUnreadMessagesCount(contacts[index].data()["contactID"]),
                         builder: (context, unreadSnapshot) {
-                          return MyTile(
-                            isGroup: false,
-                            photo: profileSnapshot.data,
-                            title: contacts[index].data()["contactName"] ?? "", 
-                            unreadMessagesCount: unreadSnapshot.data ?? 0,
-                            onTap: () {
-                              if (isLongPressed == false) {
-                                Navigator.push(
-                                  context, MaterialPageRoute(
-                                    builder: (context) => ChatPage(
-                                      receiverName: contacts[index].data()["contactName"],
-                                      receiverID: contacts[index].data()["contactID"],
-                                    )
-                                  ) 
-                                );
-                              } else {
-                                setState(() {
-                                  selectedContactID = "";
-                                  isLongPressed = false;
-                                });
+                          return StreamBuilder(
+                            stream: _chatService.getLastMessage(contacts[index].data()["contactID"]), 
+                            builder: (context, lastMessageSnapshot) {
+                              String? lastMessage;
+                              if (lastMessageSnapshot.hasData && lastMessageSnapshot.data!.docs.isNotEmpty) {
+                                final data = lastMessageSnapshot.data!.docs.first.data();
+
+                                if (data["messageType"] == "text") {
+                                  lastMessage = data["message"];
+                                } else if (data["messageType"] == "image") {
+                                  lastMessage = "🖼️ Picture";
+                                } else if (data["messageType"] == "audio") {
+                                  lastMessage = "🎤️ Voice message";
+                                }
                               }
-                            }, 
-                            onLongPress: () {
-                              setState(() {
-                                selectedContactID = contacts[index].id;
-                                selectedContactName = contacts[index].data()["contactName"];
-                                selectedContactEmail = contacts[index].data()["contactEmail"];
-                                isLongPressed = true;
-                              });
-                              showModalBottomSheet(
-                                context: context, 
-                                builder: (context) => ContactOptionsSheet(
-                                  contactID: selectedContactID,
-                                  contactEmail: selectedContactEmail,
-                                  contactName: selectedContactName,
-                                ),
+
+                              return MyTile(
+                                isGroup: false,
+                                photo: profileSnapshot.data,
+                                title: contacts[index].data()["contactName"] ?? "", 
+                                lastMessage: lastMessage ?? "",
+                                unreadMessagesCount: unreadSnapshot.data ?? 0,
+                                onTap: () {
+                                  if (isLongPressed == false) {
+                                    Navigator.push(
+                                      context, MaterialPageRoute(
+                                        builder: (context) => ChatPage(
+                                          receiverName: contacts[index].data()["contactName"],
+                                          receiverID: contacts[index].data()["contactID"],
+                                        )
+                                      ) 
+                                    );
+                                  } else {
+                                    setState(() {
+                                      selectedContactID = "";
+                                      isLongPressed = false;
+                                    });
+                                  }
+                                }, 
+                                onLongPress: () {
+                                  setState(() {
+                                    selectedContactID = contacts[index].id;
+                                    selectedContactName = contacts[index].data()["contactName"];
+                                    selectedContactEmail = contacts[index].data()["contactEmail"];
+                                    isLongPressed = true;
+                                  });
+                                  showModalBottomSheet(
+                                    context: context, 
+                                    builder: (context) => ContactOptionsSheet(
+                                      contactID: selectedContactID,
+                                      contactEmail: selectedContactEmail,
+                                      contactName: selectedContactName,
+                                    ),
+                                  );
+                                }, 
                               );
-                            }, 
+                            },
                           );
                         }
                       );

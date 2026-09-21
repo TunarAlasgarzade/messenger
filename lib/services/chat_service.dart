@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:gal/gal.dart';
@@ -174,6 +175,22 @@ class ChatService {
         .doc(chatRoomID)
         .collection("messages")
         .orderBy("timestamp", descending: true)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getLastMessage(String receiverID) {
+    final String currentUserID = _auth.currentUser!.uid;
+
+    List<String> ids = [currentUserID, receiverID];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+
+    return _firestore
+        .collection("Chat_Rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .orderBy("timestamp", descending: true)
+        .limit(1)
         .snapshots();
   }
 

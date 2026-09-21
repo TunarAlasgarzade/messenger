@@ -82,6 +82,16 @@ class GroupChatService {
         .snapshots();
   }
 
+  Stream<QuerySnapshot<Map<String, dynamic>>> getLastMessage(String groupID) {
+    return _firestore
+        .collection("Groups")
+        .doc(groupID)
+        .collection("messages")
+        .orderBy("timestamp", descending: true)
+        .limit(1)
+        .snapshots();
+  }
+
   Future<void> deleteMessage(String messageID, String groupID) async {
     await _firestore
         .collection("Groups")

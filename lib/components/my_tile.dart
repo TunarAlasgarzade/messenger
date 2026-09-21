@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class MyTile extends StatelessWidget {
   final String title;
   final String? photo;
+  final String lastMessage;
   final int? unreadMessagesCount;
   final bool isGroup;
   final void Function()? onTap;
@@ -10,6 +11,7 @@ class MyTile extends StatelessWidget {
   const MyTile({
     super.key,
     required this.title,
+    required this.lastMessage,
     required this.isGroup,
     required this.onTap,
     this.onLongPress,
@@ -40,6 +42,7 @@ class MyTile extends StatelessWidget {
         ),
       ),
       title: Text(title),
+      subtitle: Text(lastMessage),
       trailing: unreadMessagesCount != null && unreadMessagesCount != 0 ? CircleAvatar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         radius: 12,

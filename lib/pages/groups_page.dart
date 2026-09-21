@@ -145,17 +145,36 @@ class _GroupsPageState extends State<GroupsPage> {
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               final groups = snapshot.data![index];
-              return MyTile(
-                isGroup: true,
-                title: groups["name"], 
-                onTap: () => Navigator.push(
-                  context, MaterialPageRoute(
-                    builder: (context) => GroupChatPage(
-                      groupName: groups["name"],
-                      groupID: groups.id,
-                    )
-                  )
-                ),
+              return StreamBuilder(
+                stream: _groupChatService.getLastMessage(groups.id), 
+                builder: (context, lastMessageSnapshot) {
+                  String? lastMessage;
+                  if (lastMessageSnapshot.hasData && lastMessageSnapshot.data!.docs.isNotEmpty) {
+                    final data = lastMessageSnapshot.data!.docs.first.data();
+
+                    if (data["messageType"] == "text") {
+                      lastMessage = data["message"];
+                    } else if (data["messageType"] == "image") {
+                      lastMessage = "🖼️ Picture";
+                    } else if (data["messageType"] == "audio") {
+                      lastMessage = "🎤️ Voice message";
+                    }
+                  }
+
+                  return MyTile(
+                    isGroup: true,
+                    title: groups["name"], 
+                    lastMessage: lastMessage ?? "",
+                    onTap: () => Navigator.push(
+                      context, MaterialPageRoute(
+                        builder: (context) => GroupChatPage(
+                          groupName: groups["name"],
+                          groupID: groups.id,
+                        )
+                      )
+                    ),
+                  );
+                },
               );
             },
           );
