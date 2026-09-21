@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:messenger/components/my_textfield.dart';
+import 'package:messenger/components/my_tile.dart';
 import 'package:messenger/pages/group_chat_page.dart';
 import 'package:messenger/services/chat_service.dart';
 import 'package:messenger/services/group_chat_service.dart';
@@ -144,9 +145,9 @@ class _GroupsPageState extends State<GroupsPage> {
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               final groups = snapshot.data![index];
-              return ListTile(
-                leading: Icon(Icons.group),
-                title: Text(groups["name"]),
+              return MyTile(
+                isGroup: true,
+                title: groups["name"], 
                 onTap: () => Navigator.push(
                   context, MaterialPageRoute(
                     builder: (context) => GroupChatPage(

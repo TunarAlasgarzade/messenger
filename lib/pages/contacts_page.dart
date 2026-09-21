@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:messenger/components/add_contact_dialog.dart';
 import 'package:messenger/components/contact_options_sheet.dart';
-import 'package:messenger/components/contact_tile.dart';
+import 'package:messenger/components/my_tile.dart';
 import 'package:messenger/pages/chat_page.dart';
 import 'package:messenger/services/chat_service.dart';
 import 'package:messenger/services/profile_service.dart';
@@ -86,9 +86,10 @@ class _ContactsPageState extends State<ContactsPage> {
                       return StreamBuilder<int>(
                         stream: _chatService.getUnreadMessagesCount(contacts[index].data()["contactID"]),
                         builder: (context, unreadSnapshot) {
-                          return ContactTile(
-                            profilePhoto: profileSnapshot.data,
-                            contactName: contacts[index].data()["contactName"] ?? "", 
+                          return MyTile(
+                            isGroup: false,
+                            photo: profileSnapshot.data,
+                            title: contacts[index].data()["contactName"] ?? "", 
                             unreadMessagesCount: unreadSnapshot.data ?? 0,
                             onTap: () {
                               if (isLongPressed == false) {
