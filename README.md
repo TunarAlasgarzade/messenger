@@ -48,6 +48,7 @@ A real-time messaging application built with Flutter and Firebase.
 
 - Record and send voice messages
 - Recording duration displayed while recording
+- Real-time recording status shown to the other user
 - Voice message duration displayed below each message
 - Playback progress showing listened duration
 - Delete voice messages

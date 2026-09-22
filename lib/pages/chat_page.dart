@@ -94,6 +94,7 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       isRecording = false;
     });
+    _chatService.setRecordingStatus(widget.receiverID, false);
     timer!.cancel();
     seconds = 0;
     return path;
@@ -104,6 +105,7 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       isRecording = false;
     });
+    _chatService.setRecordingStatus(widget.receiverID, false);
     timer!.cancel();
     seconds = 0;
   }
@@ -194,24 +196,35 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 Text(widget.receiverName, style: TextStyle(color: Colors.white)),
                 StreamBuilder(
-                  stream: _chatService.getTypingStatus(widget.receiverID), 
-                  builder: (context, typingSnapshot) {
-                    if (typingSnapshot.hasData && typingSnapshot.data!.data()?["isTyping"] == true) {
+                  stream: _chatService.getRecordingStatus(widget.receiverID), 
+                  builder: (context, recordingSnapshot) {
+                    if (recordingSnapshot.hasData && recordingSnapshot.data!.data()?["isRecording"] == true) {
                       return Text(
-                        "${widget.receiverName} is typing",
+                        "${widget.receiverName} is recording audio",
                         style: TextStyle(fontSize: 13, color: Colors.white),
                       );
                     }
                     return StreamBuilder(
-                      stream: FirebaseFirestore.instance.collection("Users").doc(widget.receiverID).collection("profile").doc("data").snapshots(), 
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
+                      stream: _chatService.getTypingStatus(widget.receiverID), 
+                      builder: (context, typingSnapshot) {
+                        if (typingSnapshot.hasData && typingSnapshot.data!.data()?["isTyping"] == true) {
                           return Text(
-                            snapshot.data!.data()?["isOnline"] == true ? "Online" : "Offline",
+                            "${widget.receiverName} is typing",
                             style: TextStyle(fontSize: 13, color: Colors.white),
                           );
                         }
-                        return Text("", style: TextStyle(fontSize: 13));
+                        return StreamBuilder(
+                          stream: FirebaseFirestore.instance.collection("Users").doc(widget.receiverID).collection("profile").doc("data").snapshots(), 
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return Text(
+                                snapshot.data!.data()?["isOnline"] == true ? "Online" : "Offline",
+                                style: TextStyle(fontSize: 13, color: Colors.white),
+                              );
+                            }
+                            return Text("", style: TextStyle(fontSize: 13));
+                          },
+                        );
                       },
                     );
                   }, 
@@ -456,7 +469,10 @@ class _ChatPageState extends State<ChatPage> {
                 });
                 _chatService.setTypingStatus(widget.receiverID, false);
               }, 
-              onLongPress: () => recordAudio(),
+              onLongPress: () {
+                recordAudio();
+                _chatService.setRecordingStatus(widget.receiverID, true);
+              },
               icon: isSendingImage 
               ? CircularProgressIndicator(color: Colors.white) 
               : Icon(

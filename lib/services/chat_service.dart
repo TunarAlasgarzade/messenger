@@ -460,6 +460,33 @@ class ChatService {
         .snapshots();
   }
 
+  Future<void> setRecordingStatus(String receiverID, bool isRecording) async {
+    final String currentUserID = _auth.currentUser!.uid;
+
+    await _firestore
+        .collection("Users")
+        .doc(receiverID)
+        .collection("contacts")
+        .doc(currentUserID)
+        .set(
+          {
+            "isRecording": isRecording
+          },
+          SetOptions(merge: true),
+        );
+  }
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getRecordingStatus(String receiverID) {
+    final String currentUserID = _auth.currentUser!.uid;
+
+    return _firestore
+        .collection("Users")
+        .doc(currentUserID)
+        .collection("contacts")
+        .doc(receiverID)
+        .snapshots();
+  }
+
   Stream<int> getUnreadMessagesCount(String receiverID) {
     final String currentUserID = _auth.currentUser!.uid;
     List<String> ids = [currentUserID, receiverID];
