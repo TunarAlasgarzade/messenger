@@ -16,6 +16,7 @@ A real-time messaging application built with Flutter and Firebase.
 - Edit and delete messages
 - Read/unread message indicators
 - Unread message count
+- Date separators for messages (Today, Yesterday, and full dates)
 - Real-time typing indicator
 
 ### Group Messaging

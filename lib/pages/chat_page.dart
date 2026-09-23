@@ -117,6 +117,37 @@ class _ChatPageState extends State<ChatPage> {
     return "$minutes:${remainingSeconds.toString().padLeft(2, "0")}";
   }
 
+  bool isSameDay(Timestamp first, Timestamp second) {
+    final firstDate = first.toDate();
+    final secondDate = second.toDate();
+
+    return firstDate.year == secondDate.year && 
+    firstDate.month == secondDate.month && 
+    firstDate.day == secondDate.day;
+  }
+
+  String formatDate(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    final now = DateTime.now();
+
+    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+      return "Today";
+    }
+
+    final yesterday = now.subtract(const Duration(days: 1));
+
+    if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
+      return "Yesterday";
+    }
+
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    return "${months[date.month - 1]} ${date.day}, ${date.year}";
+  }
+
   @override
   void initState() {
     super.initState();
@@ -321,7 +352,43 @@ class _ChatPageState extends State<ChatPage> {
             reverse: true,
             itemCount: snapshot.hasData ? snapshot.data?.docs.length : 0,
             itemBuilder: (context, index) {
-              return _buildMessageItem(snapshot.data!.docs[index]);
+              final currentDoc = snapshot.data!.docs[index];
+              final currentTimestamp = currentDoc["timestamp"] as Timestamp;
+              final bool hasOlderMessage = index + 1 < snapshot.data!.docs.length;
+              Timestamp? olderTimestamp;
+              if (hasOlderMessage) {
+                olderTimestamp = snapshot.data!.docs[index + 1]["timestamp"] as Timestamp;
+              }
+              final bool showDateSeparator = 
+                index == snapshot.data!.docs.length - 1 ||
+                (olderTimestamp == null ? true 
+                : !isSameDay(currentTimestamp, olderTimestamp));
+              return Column(
+                children: [
+                  if (showDateSeparator)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade800,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          formatDate(currentTimestamp),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                        )
+                      ),
+                    ),
+                  _buildMessageItem(snapshot.data!.docs[index]),
+                ],
+              );
             }
           )
         );
