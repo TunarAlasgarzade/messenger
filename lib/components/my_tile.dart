@@ -42,7 +42,7 @@ class MyTile extends StatelessWidget {
         ),
       ),
       title: Text(title),
-      subtitle: Text(lastMessage),
+      subtitle: Text(lastMessage, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: unreadMessagesCount != null && unreadMessagesCount != 0 ? CircleAvatar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         radius: 12,
