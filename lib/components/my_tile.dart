@@ -41,8 +41,24 @@ class MyTile extends StatelessWidget {
           ? Icon(!isGroup ? Icons.person : Icons.group, color: Theme.of(context).colorScheme.onSurface) : null,
         ),
       ),
-      title: Text(title),
-      subtitle: Text(lastMessage, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(
+        title, 
+        style: TextStyle(
+          fontWeight: unreadMessagesCount != 0 
+          ? FontWeight.bold 
+          : FontWeight.normal
+        )
+      ),
+      subtitle: Text(
+        lastMessage, 
+        maxLines: 1, 
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontWeight: unreadMessagesCount != 0 
+          ? FontWeight.bold 
+          : FontWeight.normal
+        )
+      ),
       trailing: unreadMessagesCount != null && unreadMessagesCount != 0 ? CircleAvatar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         radius: 12,
