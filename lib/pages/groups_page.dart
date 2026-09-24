@@ -165,6 +165,7 @@ class _GroupsPageState extends State<GroupsPage> {
                     isGroup: true,
                     title: groups["name"], 
                     lastMessage: lastMessage ?? "",
+                    unreadMessagesCount: 0,
                     onTap: () => Navigator.push(
                       context, MaterialPageRoute(
                         builder: (context) => GroupChatPage(
