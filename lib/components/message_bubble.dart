@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +30,9 @@ class MessageBubble extends StatefulWidget {
 }
 
 class _MessageBubbleState extends State<MessageBubble> {
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+  StreamSubscription<Duration>? _durationSubscription;
+  StreamSubscription<Duration>? _positionSubscription;
   final AudioPlayer _player = AudioPlayer();
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
@@ -43,6 +48,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     await _player.setSourceUrl(widget.message);
     final newDuration = await _player.getDuration();
 
+    if (!mounted) return;
     if (newDuration != null) {
       setState(() {
         duration = newDuration;
@@ -66,17 +72,20 @@ class _MessageBubbleState extends State<MessageBubble> {
   void initState() {
     super.initState();
     if (widget.messageType == "audio") {
-      _player.onPlayerStateChanged.listen((state) {
-      setState(() {
+      _playerStateSubscription = _player.onPlayerStateChanged.listen((state) {
+        if (!mounted) return;
+        setState(() {
           isPlaying = (state == PlayerState.playing);
         });
       });
-      _player.onDurationChanged.listen((newDuration) {
+      _durationSubscription = _player.onDurationChanged.listen((newDuration) {
+        if (!mounted) return;
         setState(() {
           duration = newDuration;
         });
       });
-      _player.onPositionChanged.listen((newPosition) {
+      _positionSubscription = _player.onPositionChanged.listen((newPosition) {
+        if (!mounted) return;
         setState(() {
           position = newPosition;
         });
@@ -87,6 +96,9 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   @override
   void dispose() {
+    _playerStateSubscription?.cancel();
+    _durationSubscription?.cancel();
+    _positionSubscription?.cancel();
     _player.dispose();
     super.dispose();
   }
