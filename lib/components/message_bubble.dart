@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -121,130 +120,33 @@ class _MessageBubbleState extends State<MessageBubble> {
               decoration: BoxDecoration(
                 color: widget.isCurrentUser 
                   ? widget.isSelected
-                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6) 
-                  : Theme.of(context).colorScheme.primary 
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6) 
+                    : Theme.of(context).colorScheme.primary 
                   : widget.isSelected 
-                  ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.6) 
-                  : Theme.of(context).colorScheme.tertiary,
+                    ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.6) 
+                    : Theme.of(context).colorScheme.tertiary,
                 borderRadius: BorderRadius.circular(12)
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: widget.isCurrentUser ? [
-                  Flexible(
-                    child: widget.messageType == "text" ? Text(
-                      widget.message,
-                      style: TextStyle(color: Colors.white),
-                    ) : widget.messageType ==  "audio" ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: isPlaying == false ? playAudio : pauseAudio, 
-                              icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white)
-                            ),
-                            Slider(
-                              value: position.inMilliseconds.toDouble(), 
-                              onChanged: (value) {
-                                _player.seek(
-                                  Duration(milliseconds: value.toInt())
-                                );
-                              }, 
-                              max: duration.inMilliseconds.toDouble(),
-                              inactiveColor: Colors.grey.shade400,
-                              activeColor: Colors.white
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 12),
-                          child: Text(
-                            formatDuration(hasStarted ? position : duration),
-                            style: TextStyle(color: Colors.white)
-                          ),
-                        )
-                      ],
+                children: [
+                  if (widget.messageType == "text")
+                    _buildTextMessage() ,
+                  if (widget.messageType ==  "audio") 
+                    _buildAudioMessage(),
+                  if (widget.messageType == "image")
+                    _buildImageMessage(),
+                  if (widget.isCurrentUser) ...[
+                    SizedBox(width: 6),
+                    Icon(
+                      widget.isRead ? Icons.done_all : Icons.done,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.primary == Colors.blue 
+                      ? widget.isRead ? Colors.white70 : Colors.grey.shade400 
+                      : widget.isRead ? Colors.blue : Colors.white70,
                     )
-                    : GestureDetector(
-                      child: Image.network(
-                        widget.message,
-                        width: 248,
-                        height: 248,
-                        fit: BoxFit.cover,
-                      ),
-                      onTap: () => showDialog(
-                        context: context, 
-                        builder: (context) => Dialog(
-                          child: InteractiveViewer(
-                            child: Image.network(widget.message)
-                          ),
-                        ),
-                      ),
-                    )
-                  ),
-                  SizedBox(width: 6),
-                  Icon(
-                    widget.isRead ? Icons.done_all : Icons.done,
-                    size: 14,
-                    color: Theme.of(context).colorScheme.primary == Colors.blue 
-                    ? widget.isRead ? Colors.white70 : Colors.grey.shade400 
-                    : widget.isRead ? Colors.blue : Colors.white70,
-                  )
-                ] : [
-                  Flexible(
-                    child: widget.messageType == "text" ? Text(
-                      widget.message,
-                      style: TextStyle(color: Colors.white),
-                    ) : widget.messageType ==  "audio" ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: isPlaying == false ? playAudio : pauseAudio, 
-                              icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white)
-                            ),
-                            Slider(
-                              value: position.inMilliseconds.toDouble(), 
-                              onChanged: (value) {
-                                _player.seek(
-                                  Duration(milliseconds: value.toInt())
-                                );
-                              },
-                              max: duration.inMilliseconds.toDouble(), 
-                              inactiveColor: Theme.of(context).colorScheme.secondary,
-                              activeColor: Colors.white
-                            )
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 11),
-                          child: Text(
-                            formatDuration(hasStarted ? position : duration),
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    )
-                    : GestureDetector(
-                      child: Image.network(
-                        widget.message,
-                        width: 248,
-                        height: 248,
-                        fit: BoxFit.cover,
-                      ),
-                      onTap: () => showDialog(
-                        context: context, 
-                        builder: (context) => Dialog(
-                          child: InteractiveViewer(
-                            child: Image.network(widget.message)
-                          ),
-                        )
-                      ),
-                    )
-                  ),
-                ],
+                  ]
+                ]
               ),
             ),
             Padding(
@@ -255,6 +157,72 @@ class _MessageBubbleState extends State<MessageBubble> {
               ),
             )
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextMessage() {
+    return Flexible(
+      child: Text(
+        widget.message,
+        style: TextStyle(color: Colors.white),
+      )
+    );
+  }
+
+  Widget _buildAudioMessage() {
+    return Flexible(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: isPlaying == false ? playAudio : pauseAudio, 
+                icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white)
+              ),
+              Slider(
+                value: position.inMilliseconds.toDouble(), 
+                onChanged: (value) {
+                  _player.seek(
+                    Duration(milliseconds: value.toInt())
+                  );
+                }, 
+                max: duration.inMilliseconds.toDouble(),
+                inactiveColor: Colors.grey.shade400,
+                activeColor: Colors.white
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Text(
+              formatDuration(hasStarted ? position : duration),
+              style: TextStyle(color: Colors.white)
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageMessage() {
+    return Flexible(
+      child: GestureDetector(
+        child: Image.network(
+          widget.message,
+          width: 248,
+          height: 248,
+          fit: BoxFit.cover,
+        ),
+        onTap: () => showDialog(
+          context: context, 
+          builder: (context) => Dialog(
+            child: InteractiveViewer(
+              child: Image.network(widget.message)
+            ),
+          )
         ),
       ),
     );
