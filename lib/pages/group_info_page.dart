@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:messenger/components/my_textfield.dart';
 import 'package:messenger/pages/home_page.dart';
-import 'package:messenger/services/chat_service.dart';
+import 'package:messenger/services/contact_service.dart';
 import 'package:messenger/services/group_chat_service.dart';
 
 class GroupInfoPage extends StatefulWidget {
@@ -21,7 +21,7 @@ class GroupInfoPage extends StatefulWidget {
 
 class _GroupInfoPageState extends State<GroupInfoPage> {
   final _groupChatService = GroupChatService();
-  final _chatService = ChatService();
+  final _contactService = ContactService();
   final _renameGroupController = TextEditingController();
   final userID = FirebaseAuth.instance.currentUser!.uid;
   final _firestore = FirebaseFirestore.instance;
@@ -49,7 +49,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
         builder: (context, setState) => AlertDialog(
           title: Text("Add Member"),
           content:  StreamBuilder(
-            stream: _chatService.getContacts(), 
+            stream: _contactService.getContacts(), 
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 final contacts = snapshot.data!.docs
@@ -225,38 +225,282 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
               _renameGroupController.text = groupName ?? "";
               showDialog(
                 context: context, 
-                builder: (context) =>  AlertDialog(
-                  title: Text("Rename Group"),
-                  content: MyTextfield(
-                    controller: _renameGroupController, 
-                    obscureText: false, 
-                    hintText: "New Name"
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context), 
-                      child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                    ),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary
+                builder: (context) =>  _renameGroupDialog(context),
+              );
+            },
+            icon: Icon(Icons.edit)
+          )
+        ] : [],
+      ),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildGroupSettings(),
+            Expanded(child: _buildMembersList()),
+            _buildGroupOptions(context)
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _renameGroupDialog(BuildContext context) {
+    return AlertDialog(
+      title: Text("Rename Group"),
+      content: MyTextfield(
+        controller: _renameGroupController, 
+        obscureText: false, 
+        hintText: "New Name"
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context), 
+          child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.primary
+          ),
+          onPressed: () async {
+            if (_renameGroupController.text.trim().isNotEmpty) {
+              Navigator.pop(context);
+              try {
+                await _groupChatService.renameGroup(
+                  widget.groupID, _renameGroupController.text
+                );
+                setState(() {
+                  groupName = _renameGroupController.text;
+                });
+                _renameGroupController.text = "";
+                if (!mounted) return;
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "Group name updated successfully!",
+                      style: TextStyle(
+                        color: Colors.white,
                       ),
-                      onPressed: () async {
-                        if (_renameGroupController.text.trim().isNotEmpty) {
-                          Navigator.pop(context);
+                    ),
+                    backgroundColor: Colors.green,
+                  )
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      e.toString().replaceAll("Exception: ", ""),
+                      style: TextStyle(
+                        color: Colors.white, 
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+          child: Text("Save", style: TextStyle(color: Colors.white))
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGroupOptions(BuildContext context) {
+    return Column(
+      children: [
+        Visibility(
+          visible: isAdmin,
+          child: ListTile(
+            leading: Icon(Icons.person_add),
+            title: Text("Add Member"),
+            onTap: () async {
+              await _addMember();
+            },
+          )
+        ),
+        ListTile(
+          leading: Icon(Icons.logout, color: Colors.red),
+          title: Text(
+            "Exit group",
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold
+            ),
+          ),
+          onTap: () => showDialog(
+            context: context, 
+            builder: (context) => AlertDialog(
+              title: Text("Exit group?"),
+              content: Text("Are you sure you want to exit the group?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context), 
+                  child: Text(
+                    "Cancel", style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary
+                    ),
+                  )
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await _groupChatService.leaveGroup(widget.groupID);
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      this.context, MaterialPageRoute(
+                        builder: (context) => HomePage(),
+                      ),
+                      (route) => false
+                    );
+                  }, 
+                  child: Text(
+                    "Exit", style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary
+                    ),
+                  )
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMembersList() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            SizedBox(width: 12),
+            Text(
+              "Members", style: TextStyle(
+                color: Theme.of(context).colorScheme.primary, 
+                fontWeight: FontWeight.bold
+              )
+            ),
+          ],
+        ),
+        Expanded(
+          child: StreamBuilder(
+            stream: _groupChatService.getMembers(widget.groupID), 
+            builder: (context, snapshot) {
+              return ListView.builder(
+                itemCount: snapshot.hasData ? snapshot.data!.docs.length : 0,
+                itemBuilder: (context, index) {
+                  final members = snapshot.data!.docs[index].data();
+                  final String memberName;
+                  if (members["uid"] == userID) {
+                    memberName = "You";
+                  } else {
+                    memberName = contactNames[members["uid"]] ?? memberEmails[members["uid"]] ?? "";
+                  }
+                  final memberRole = members["role"];
+                  return ListTile(
+                    title: Text(memberName),
+                    subtitle: Text(memberRole),
+                    trailing: isAdmin && members["uid"] != userID ? PopupMenuButton(
+                      icon: Icon(Icons.more_vert), 
+                      onSelected: (value) async {
+                        if (value == "remove") {
+                          showDialog(
+                            context: context, 
+                            builder: (context) => AlertDialog(
+                              title: Text("Remove member?"),
+                              content: Text("Are you sure you want to remove this member from the group?"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context), 
+                                  child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    Navigator.pop(context);
+                                    try {
+                                      await _groupChatService.removeMember(
+                                        widget.groupID, members["uid"]
+                                      );
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(this.context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            "Member removed successfully!",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    } catch (e) {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(this.context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            e.toString().replaceAll("Exception: ", ""),
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontWeight: FontWeight.bold
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }, 
+                                  child: Text("Remove", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        if (value == "make admin") {
                           try {
-                            await _groupChatService.renameGroup(
-                              widget.groupID, _renameGroupController.text
+                            await _groupChatService.makeAdmin(
+                              widget.groupID, members["uid"]
                             );
-                            setState(() {
-                              groupName = _renameGroupController.text;
-                            });
-                            _renameGroupController.text = "";
                             if (!mounted) return;
                             ScaffoldMessenger.of(this.context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  "Group name updated successfully!",
+                                  "Member promoted to admin successfully!",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                backgroundColor: Colors.green,
+                              )
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  e.toString().replaceAll("Exception: ", ""),
+                                  style: TextStyle(
+                                    color: Colors.white, 
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                        if (value == "remove admin") {
+                          try {
+                            await _groupChatService.removeAdmin(
+                              widget.groupID, members["uid"]
+                            );
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Admin role removed successfully!",
                                   style: TextStyle(
                                     color: Colors.white,
                                   ),
@@ -281,271 +525,49 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                           }
                         }
                       },
-                      child: Text("Save", style: TextStyle(color: Colors.white))
-                    ),
-                  ],
-                ),
+                      itemBuilder: (context) => members["role"] == "member" ? [
+                        PopupMenuItem(
+                          value: "make admin",
+                          child: Text("Make group admin")
+                        ),
+                        PopupMenuItem(
+                          value: "remove",
+                          child: Text("Remove from group", style: TextStyle(color: Colors.red))
+                        ),
+                      ] : [
+                        PopupMenuItem(
+                          value: "remove admin",
+                          child: Text("Dismiss as admin")
+                        ),
+                        PopupMenuItem(
+                          value: "remove",
+                          child: Text("Remove from group", style: TextStyle(color: Colors.red))
+                        ),
+                      ],
+                    ) : null
+                  );
+                },
               );
             },
-            icon: Icon(Icons.edit)
-          )
-        ] : [],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Visibility(
-                visible: isAdmin,
-                child: SwitchListTile(
-                  title: Text("Members can edit group info"),
-                  subtitle: Text("Allow all members to edit group name"),
-                  value: membersCanEditInfo, 
-                  onChanged: (value) async {
-                    _groupChatService.setMembersCanEditInfo(widget.groupID, value);
-                    setState(() {
-                      membersCanEditInfo = value;
-                    });
-                  },
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  SizedBox(width: 12),
-                  Text(
-                    "Members", style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary, 
-                      fontWeight: FontWeight.bold
-                    )
-                  ),
-                ],
-              ),
-              Expanded(
-                child: StreamBuilder(
-                  stream: _groupChatService.getMembers(widget.groupID), 
-                  builder: (context, snapshot) {
-                    return ListView.builder(
-                      itemCount: snapshot.hasData ? snapshot.data!.docs.length : 0,
-                      itemBuilder: (context, index) {
-                        final members = snapshot.data!.docs[index].data();
-                        final String memberName;
-                        if (members["uid"] == userID) {
-                          memberName = "You";
-                        } else {
-                          memberName = contactNames[members["uid"]] ?? memberEmails[members["uid"]] ?? "";
-                        }
-                        final memberRole = members["role"];
-                        return ListTile(
-                          title: Text(memberName),
-                          subtitle: Text(memberRole),
-                          trailing: isAdmin && members["uid"] != userID ? PopupMenuButton(
-                            icon: Icon(Icons.more_vert), 
-                            onSelected: (value) async {
-                              if (value == "remove") {
-                                showDialog(
-                                  context: context, 
-                                  builder: (context) => AlertDialog(
-                                    title: Text("Remove member?"),
-                                    content: Text("Are you sure you want to remove this member from the group?"),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context), 
-                                        child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                                      ),
-                                      TextButton(
-                                        onPressed: () async {
-                                          Navigator.pop(context);
-                                          try {
-                                            await _groupChatService.removeMember(
-                                              widget.groupID, members["uid"]
-                                            );
-                                            if (!mounted) return;
-                                            ScaffoldMessenger.of(this.context).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  "Member removed successfully!",
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                                backgroundColor: Colors.green,
-                                              ),
-                                            );
-                                          } catch (e) {
-                                            if (!mounted) return;
-                                            ScaffoldMessenger.of(this.context).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  e.toString().replaceAll("Exception: ", ""),
-                                                  style: TextStyle(
-                                                    color: Colors.white, 
-                                                    fontWeight: FontWeight.bold
-                                                  ),
-                                                ),
-                                                backgroundColor: Colors.red,
-                                              ),
-                                            );
-                                          }
-                                        }, 
-                                        child: Text("Remove", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-                              if (value == "make admin") {
-                                try {
-                                  await _groupChatService.makeAdmin(
-                                    widget.groupID, members["uid"]
-                                  );
-                                  if (!mounted) return;
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Member promoted to admin successfully!",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      backgroundColor: Colors.green,
-                                    )
-                                  );
-                                } catch (e) {
-                                  if (!mounted) return;
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        e.toString().replaceAll("Exception: ", ""),
-                                        style: TextStyle(
-                                          color: Colors.white, 
-                                          fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              }
-                              if (value == "remove admin") {
-                                try {
-                                  await _groupChatService.removeAdmin(
-                                    widget.groupID, members["uid"]
-                                  );
-                                  if (!mounted) return;
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Admin role removed successfully!",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      backgroundColor: Colors.green,
-                                    )
-                                  );
-                                } catch (e) {
-                                  if (!mounted) return;
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        e.toString().replaceAll("Exception: ", ""),
-                                        style: TextStyle(
-                                          color: Colors.white, 
-                                          fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                            itemBuilder: (context) => members["role"] == "member" ? [
-                              PopupMenuItem(
-                                value: "make admin",
-                                child: Text("Make group admin")
-                              ),
-                              PopupMenuItem(
-                                value: "remove",
-                                child: Text("Remove from group", style: TextStyle(color: Colors.red))
-                              ),
-                            ] : [
-                              PopupMenuItem(
-                                value: "remove admin",
-                                child: Text("Dismiss as admin")
-                              ),
-                              PopupMenuItem(
-                                value: "remove",
-                                child: Text("Remove from group", style: TextStyle(color: Colors.red))
-                              ),
-                            ],
-                          ) : null
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-              Visibility(
-                visible: isAdmin,
-                child: ListTile(
-                  leading: Icon(Icons.person_add),
-                  title: Text("Add Member"),
-                  onTap: () async {
-                    await _addMember();
-                  },
-                )
-              ),
-              ListTile(
-                leading: Icon(Icons.logout, color: Colors.red),
-                title: Text(
-                  "Exit group",
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold
-                  ),
-                ),
-                onTap: () => showDialog(
-                  context: context, 
-                  builder: (context) => AlertDialog(
-                    title: Text("Exit group?"),
-                    content: Text("Are you sure you want to exit the group?"),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context), 
-                        child: Text(
-                          "Cancel", style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary
-                          ),
-                        )
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          await _groupChatService.leaveGroup(widget.groupID);
-                          if (!mounted) return;
-                          Navigator.pushAndRemoveUntil(
-                            this.context, MaterialPageRoute(
-                              builder: (context) => HomePage(),
-                            ),
-                            (route) => false
-                          );
-                        }, 
-                        child: Text(
-                          "Exit", style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary
-                          ),
-                        )
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            ],
           ),
-        )
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGroupSettings() {
+    return Visibility(
+      visible: isAdmin,
+      child: SwitchListTile(
+        title: Text("Members can edit group info"),
+        subtitle: Text("Allow all members to edit group name"),
+        value: membersCanEditInfo, 
+        onChanged: (value) async {
+          _groupChatService.setMembersCanEditInfo(widget.groupID, value);
+          setState(() {
+            membersCanEditInfo = value;
+          });
+        },
       ),
     );
   }

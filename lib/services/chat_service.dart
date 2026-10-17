@@ -6,7 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:messenger/models/message.dart';
+import 'package:messenger/models/media_message.dart';
+import 'package:messenger/models/text_message.dart';
 import 'package:path_provider/path_provider.dart';
 
 class ChatService {
@@ -83,11 +84,10 @@ class ChatService {
   Future<void> sendTextMessage(String message, String receiverID) async {
     final String currentUserID = _auth.currentUser!.uid;
 
-    Message newMessage = Message(
+    TextMessage newMessage = TextMessage(
       senderId: currentUserID, 
       receiverId: receiverID, 
       message: message,
-      messageType: "text",
       isRead: false,
       timestamp: Timestamp.now()
     );
@@ -112,7 +112,7 @@ class ChatService {
     
     final uploadData = await _uploadFile(audioPath, "getAudioUploadSignature", "video");
 
-    Message newMessage = Message(
+    MediaMessage newMessage = MediaMessage(
       senderId: currentUserID, 
       receiverId: receiverID, 
       message: uploadData["secureUrl"], 
@@ -142,7 +142,7 @@ class ChatService {
     
     final uploadData = await _uploadFile(image.path, "getChatImageUploadSignature", "image");
 
-    Message newMessage = Message(
+    MediaMessage newMessage = MediaMessage(
       senderId: currentUserID, 
       receiverId: receiverID, 
       message: uploadData["secureUrl"],
@@ -264,128 +264,6 @@ class ChatService {
             "message": message
           }
         );
-  }
-
-  Future<void> addContact(String contactUID, String contactName, String contactEmail) async {
-    final currentUserID = _auth.currentUser!.uid;
-
-    await _firestore
-        .collection("Users")
-        .doc(currentUserID)
-        .collection("contacts")
-        .doc(contactUID)
-        .set(
-          {
-            "contactName": contactName,
-            "contactEmail": contactEmail,
-            "contactID": contactUID,
-          }
-        );
-  }
-
-  Stream<QuerySnapshot<Map<String, dynamic>>> getContacts() {
-    final String currentUserID = _auth.currentUser!.uid;
-
-    return _firestore
-        .collection("Users")
-        .doc(currentUserID)
-        .collection("contacts")
-        .snapshots();
-  }
-
-  Future<void> deleteContact(String contactID) async {
-    final currentUserID = _auth.currentUser!.uid;
-
-    await _firestore.
-        collection("Users")
-        .doc(currentUserID)
-        .collection("contacts")
-        .doc(contactID)
-        .delete();
-  }
-
-  Future<void> updateContact(String contactUID, String contactName, String contactEmail) async {
-    final currentUserID = _auth.currentUser!.uid;
-
-    await _firestore
-        .collection("Users")
-        .doc(currentUserID)
-        .collection("contacts")
-        .doc(contactUID)
-        .update(
-          {
-            "contactName": contactName,
-            "contactEmail": contactEmail,
-            "contactID": contactUID,
-          }
-        );
-  }
-
-  Future<void> blockContact(String contactID, String contactName, String contactEmail) async {
-    final currentUserID = _auth.currentUser!.uid;
-
-    await _firestore
-        .collection("Users")
-        .doc(currentUserID)
-        .collection("blocked_contacts")
-        .doc(contactID)
-        .set(
-          {
-            "contactName": contactName,
-            "contactEmail": contactEmail,
-            "contactID": contactID,
-          }
-        );
-  }
-
-  Stream<QuerySnapshot<Map<String, dynamic>>> getBlockedContacts() {
-    final String currentUserID = _auth.currentUser!.uid;
-
-    return _firestore
-        .collection("Users")
-        .doc(currentUserID)
-        .collection("blocked_contacts")
-        .snapshots();
-  }
-
-  Future<void> unblockContact(String contactID) async {
-    final currentUserID = _auth.currentUser!.uid;
-
-    await _firestore
-        .collection("Users")
-        .doc(currentUserID)
-        .collection("blocked_contacts")
-        .doc(contactID)
-        .delete();
-  }
-  
-  Future<String?> getUserUIDByEmail(String email) async {
-    final user = _auth.currentUser;
-
-    if (user == null) {
-      return null;
-    }
-
-    final idToken = await user.getIdToken();
-    final response = await http.post(
-      Uri.parse("https://messenger-notifications.t-alasgarzade.workers.dev/"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $idToken",
-      },
-      body: jsonEncode({
-        "action": "getUidByEmail",
-        "email": email.trim()
-      })
-    );
-    
-    if (response.statusCode != 200) {
-      return null;
-    }
-
-    final data = jsonDecode(response.body);
-
-    return data["uid"];
   }
 
   Future<void> markAsRead(String receiverID, String messageID) async {

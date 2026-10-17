@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:messenger/components/my_textfield.dart';
 import 'package:messenger/components/my_tile.dart';
 import 'package:messenger/pages/group_chat_page.dart';
-import 'package:messenger/services/chat_service.dart';
+import 'package:messenger/services/contact_service.dart';
 import 'package:messenger/services/group_chat_service.dart';
 
 class GroupsPage extends StatefulWidget {
@@ -16,8 +16,14 @@ class GroupsPage extends StatefulWidget {
 class _GroupsPageState extends State<GroupsPage> {
   final _createGroupController = TextEditingController();
   final _groupChatService = GroupChatService();
-  final _chatService = ChatService();
+  final _contactService = ContactService();
   List<String> selectedUsers = [];
+
+  @override
+  void dispose() {
+    _createGroupController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,95 +40,7 @@ class _GroupsPageState extends State<GroupsPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => showDialog(
           context: context, 
-          builder: (context) => StatefulBuilder(
-            builder: (context, setState) => AlertDialog(
-              title: Text("Create Group"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  MyTextfield(
-                    controller: _createGroupController, 
-                    obscureText: false, 
-                    hintText: "Group Name"
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SizedBox(width: 12),
-                      Text(
-                        "Select Members", style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary, 
-                          fontWeight: FontWeight.bold
-                        )
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Flexible(
-                    child: StreamBuilder(
-                      stream: _chatService.getContacts(), 
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return SizedBox(
-                            width: 300,
-                            height: 206,
-                            child: ListView.builder(
-                              itemCount: snapshot.data!.docs.length,
-                              itemBuilder: (context, index) {
-                                final contacts = snapshot.data!.docs[index];
-                                return ListTile(
-                                  leading: Checkbox(
-                                    value: selectedUsers.contains(contacts["contactID"]), 
-                                    onChanged: (value) {
-                                      setState(() {
-                                        if (value == true) {
-                                          selectedUsers.add(contacts["contactID"]);
-                                        } else {
-                                          selectedUsers.remove(contacts["contactID"]);
-                                        }
-                                      });
-                                    },
-                                  ),
-                                  title: Text(contacts["contactName"]),
-                                );
-                              },
-                            ),
-                          );
-                        } else {
-                          return Text("Loading..");
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context), 
-                  child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                ),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary
-                  ),
-                  onPressed: () async {
-                    if (_createGroupController.text.trim().isNotEmpty && selectedUsers.isNotEmpty) {
-                      Navigator.pop(context);
-                      _groupChatService.createGroup(
-                        _createGroupController.text, 
-                        Timestamp.now(),
-                        selectedUsers
-                      );
-                      _createGroupController.clear();
-                      selectedUsers = [];
-                    }
-                  },
-                  child: Text("Save", style: TextStyle(color: Colors.white))
-                )
-              ],
-            ),
-          ),
+          builder: (context) => _addGroupDialog(),
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,
         child: Icon(Icons.group_add, color: Colors.white),
@@ -183,6 +101,98 @@ class _GroupsPageState extends State<GroupsPage> {
           return Text("Loading..");
         }
       },
+    );
+  }
+
+  Widget _addGroupDialog() {
+    return StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text("Create Group"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MyTextfield(
+              controller: _createGroupController, 
+              obscureText: false, 
+              hintText: "Group Name"
+            ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                SizedBox(width: 12),
+                Text(
+                  "Select Members", style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary, 
+                    fontWeight: FontWeight.bold
+                  )
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Flexible(
+              child: StreamBuilder(
+                stream: _contactService.getContacts(), 
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return SizedBox(
+                      width: 300,
+                      height: 206,
+                      child: ListView.builder(
+                        itemCount: snapshot.data!.docs.length,
+                        itemBuilder: (context, index) {
+                          final contacts = snapshot.data!.docs[index];
+                          return ListTile(
+                            leading: Checkbox(
+                              value: selectedUsers.contains(contacts["contactID"]), 
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedUsers.add(contacts["contactID"]);
+                                  } else {
+                                    selectedUsers.remove(contacts["contactID"]);
+                                  }
+                                });
+                              },
+                            ),
+                            title: Text(contacts["contactName"]),
+                          );
+                        },
+                      ),
+                    );
+                  } else {
+                    return Text("Loading..");
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary
+            ),
+            onPressed: () async {
+              if (_createGroupController.text.trim().isNotEmpty && selectedUsers.isNotEmpty) {
+                Navigator.pop(context);
+                _groupChatService.createGroup(
+                  _createGroupController.text, 
+                  Timestamp.now(),
+                  selectedUsers
+                );
+                _createGroupController.clear();
+                selectedUsers = [];
+              }
+            },
+            child: Text("Save", style: TextStyle(color: Colors.white))
+          )
+        ],
+      ),
     );
   }
 }

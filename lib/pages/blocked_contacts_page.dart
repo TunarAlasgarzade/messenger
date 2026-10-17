@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:messenger/services/chat_service.dart';
+import 'package:messenger/services/contact_service.dart';
 
 class BlockedContactsPage extends StatefulWidget {
   const BlockedContactsPage({super.key});
@@ -9,9 +9,10 @@ class BlockedContactsPage extends StatefulWidget {
 }
 
 class _BlockedContactsPageState extends State<BlockedContactsPage> {
+  final _contactService = ContactService();
+
   @override
   Widget build(BuildContext context) {
-    final chatService = ChatService();
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -21,7 +22,7 @@ class _BlockedContactsPageState extends State<BlockedContactsPage> {
       body: SafeArea(
         child: Center(
           child: StreamBuilder(
-            stream: chatService.getBlockedContacts(), 
+            stream: _contactService.getBlockedContacts(), 
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Text("Error");
@@ -42,7 +43,7 @@ class _BlockedContactsPageState extends State<BlockedContactsPage> {
                           context: context, 
                           builder: (context) => AlertDialog(
                             title: Text("Unblock Contact?"),
-                            content: Text("Are you sure to do you want to unblock this contact?"),
+                            content: Text("Are you sure you want to unblock this contact?"),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context), 
@@ -51,10 +52,11 @@ class _BlockedContactsPageState extends State<BlockedContactsPage> {
                               TextButton(
                                 onPressed: () async {
                                   Navigator.pop(context);
-                                  await chatService.unblockContact(
+                                  await _contactService.unblockContact(
                                     snapshot.data!.docs[index].data()["contactID"]
                                   );
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         "Contact Unblocked!", 

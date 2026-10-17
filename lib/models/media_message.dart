@@ -1,22 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Message {
+class MediaMessage {
   final String senderId;
   final String receiverId;
   final String message;
   final String messageType;
-  final String? publicID;
+  final String publicID;
   final bool isRead;
   final Timestamp timestamp;
 
-  Message({
+  MediaMessage({
     required this.senderId,
     required this.receiverId,
     required this.message,
     required this.messageType,
     required this.isRead,
     required this.timestamp,
-    this.publicID,
+    required this.publicID,
   });
 
   Map<String, dynamic> toMap() {

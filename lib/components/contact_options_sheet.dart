@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:messenger/components/my_textfield.dart';
-import 'package:messenger/services/chat_service.dart';
+import 'package:messenger/services/contact_service.dart';
 
-class ContactOptionsSheet extends StatelessWidget {
+class ContactOptionsSheet extends StatefulWidget {
   final String contactID;
   final String contactEmail;
   final String contactName;
@@ -14,22 +14,44 @@ class ContactOptionsSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final chatService = ChatService();
-    final editNameController = TextEditingController();
-    final editEmailController = TextEditingController();
+  State<ContactOptionsSheet> createState() => _ContactOptionsSheetState();
+}
 
+class _ContactOptionsSheetState extends State<ContactOptionsSheet> {
+  final contactService = ContactService();
+  final _editNameController = TextEditingController();
+  final _editEmailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _editNameController.dispose();
+    _editEmailController.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          SizedBox(height: 8),
+          Container(
+            width: 33.5,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[400],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          SizedBox(height: 5),
           ListTile(
             leading: Icon(Icons.edit),
             title: Text("Edit Contact"),
             onTap: () {
               Navigator.pop(context);
-              editNameController.text = contactName;
-              editEmailController.text = contactEmail;
+              _editNameController.text = widget.contactName;
+              _editEmailController.text = widget.contactEmail;
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -39,13 +61,13 @@ class ContactOptionsSheet extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       MyTextfield(
-                        controller: editNameController, 
+                        controller: _editNameController, 
                         obscureText: false, 
                         hintText: "Name"
                       ),
                       SizedBox(height: 10),
                       MyTextfield(
-                        controller: editEmailController, 
+                        controller: _editEmailController, 
                         obscureText: false, 
                         hintText: "Email"
                       ),
@@ -61,14 +83,14 @@ class ContactOptionsSheet extends StatelessWidget {
                         backgroundColor: Theme.of(context).colorScheme.primary
                       ),
                       onPressed: () async {
-                        if (editNameController.text.trim().isNotEmpty && editEmailController.text.trim().isNotEmpty) {
+                        if (_editNameController.text.trim().isNotEmpty && _editEmailController.text.trim().isNotEmpty) {
                           Navigator.pop(context);
-                          final uid = await chatService.getUserUIDByEmail(editEmailController.text);
+                          final uid = await contactService.getUserUIDByEmail(_editEmailController.text);
                           if (uid == null) return;
-                          await chatService.updateContact(
+                          await contactService.updateContact(
                             uid, 
-                            editNameController.text, 
-                            editEmailController.text,
+                            _editNameController.text, 
+                            _editEmailController.text,
                           );
                         }
                       },
@@ -97,7 +119,7 @@ class ContactOptionsSheet extends StatelessWidget {
                     TextButton(
                       onPressed: () async {
                         Navigator.pop(context);
-                        await chatService.blockContact(contactID, contactName, contactEmail);
+                        await contactService.blockContact(widget.contactID, widget.contactName, widget.contactEmail);
                       }, 
                       child: Text("Block", style: TextStyle(color: Theme.of(context).colorScheme.primary))
                     )
@@ -124,11 +146,12 @@ class ContactOptionsSheet extends StatelessWidget {
                     TextButton(
                       onPressed: () async {
                         Navigator.pop(context);
-                        await chatService.deleteContact(contactID);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        await contactService.deleteContact(widget.contactID);
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(this.context).showSnackBar(
                           SnackBar(
                             content: Text("Contact Deleted", style: TextStyle(color: Colors.white)),
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(this.context).colorScheme.primary,
                           )
                         );
                       }, 
