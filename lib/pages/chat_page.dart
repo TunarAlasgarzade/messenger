@@ -148,6 +148,19 @@ class _ChatPageState extends State<ChatPage> {
     return "${months[date.month - 1]} ${date.day}, ${date.year}";
   }
 
+  String formatLastSeen(DateTime date) {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+
+    if (date.day == now.day && date.month == now.month && date.year == now.year) {
+      return "Last seen today at ${date.hour}:${date.minute.toString().padLeft(2, "0")}";
+    } else if (date.day == yesterday.day && date.month == yesterday.month && date.year == yesterday.year) {
+      return "Last seen yesterday at ${date.hour}:${date.minute.toString().padLeft(2, "0")}";
+    } else {
+      return "Last seen ${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, "0")}";
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -248,8 +261,15 @@ class _ChatPageState extends State<ChatPage> {
                           stream: FirebaseFirestore.instance.collection("Users").doc(widget.receiverID).collection("profile").doc("data").snapshots(), 
                           builder: (context, snapshot) {
                             if (snapshot.hasData) {
+                              final data = snapshot.data!.data();
+                              final isOnline = data?["isOnline"];
+                              final lastSeen = data?["lastSeen"];
                               return Text(
-                                snapshot.data!.data()?["isOnline"] == true ? "Online" : "Offline",
+                                isOnline == true 
+                                  ? "Online" 
+                                  : lastSeen is Timestamp
+                                    ? formatLastSeen(lastSeen.toDate())
+                                    : "Offline",
                                 style: TextStyle(fontSize: 13, color: Colors.white),
                               );
                             }

@@ -147,8 +147,11 @@ class ProfileService {
     final currentUserID = _auth.currentUser!.uid;
 
     await _firestore.collection("Users").doc(currentUserID).collection("profile").doc("data").set(
-      {
+      isOnline ? {
         "isOnline": isOnline
+      } : {
+        "isOnline": isOnline,
+        "lastSeen": Timestamp.now()
       },
       SetOptions(merge: true),
     );
