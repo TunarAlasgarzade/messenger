@@ -309,7 +309,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
       children: [
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(left: 10, right: 5, bottom: 10),
+            padding: const EdgeInsets.only(left: 10, right: 5, bottom: 10, top: 5),
             child: MyTextfield(
               controller: _messageController, 
               obscureText: false,
