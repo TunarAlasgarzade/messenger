@@ -104,3 +104,4 @@ A real-time messaging application built with Flutter and Firebase.
 - HTTP
 - Record
 - AudioPlayers
+- Emoji_regex

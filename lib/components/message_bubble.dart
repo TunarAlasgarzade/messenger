@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emoji_regex/emoji_regex.dart';
 import 'package:flutter/material.dart';
 
 class MessageBubble extends StatefulWidget {
@@ -66,6 +67,13 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     return "$minutes:${remainingSeconds.toString().padLeft(2, "0")}";
   }
+
+  bool _isEmojiOnly(String text) {
+    return emojiRegex().hasMatch(text.trim()) 
+      && emojiRegex().allMatches(text.trim()).map(
+        (match) => match.group(0)
+      ).join() == text.trim().replaceAll("\uFE0F", "");
+  } 
 
   @override
   void initState() {
@@ -163,10 +171,11 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   Widget _buildTextMessage() {
+    bool isEmojiOnly = _isEmojiOnly(widget.message);
     return Flexible(
       child: Text(
         widget.message,
-        style: TextStyle(color: Colors.white),
+        style: TextStyle(color: Colors.white, fontSize:  isEmojiOnly ? 20 : null),
       )
     );
   }

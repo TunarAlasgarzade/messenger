@@ -46,6 +46,7 @@ dependencies:
   record: ^7.1.1
   path_provider: ^2.1.6
   gal: ^2.3.3
+  emoji_regex: ^0.0.5
 
 dev_dependencies:
   flutter_test:
